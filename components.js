@@ -301,7 +301,6 @@ border: none;
     --width: 100%;
     --icon-gap: 0.5rem;
     --border-radius: 0.3rem;
-    --padding: 0.7rem 1rem;
     --background: rgba(var(--text-color), 0.06);
 }
 .hide{
@@ -335,7 +334,7 @@ border: none;
             align-items: center;
     position: relative;
     gap: var(--icon-gap);
-    padding: var(--padding);
+    padding: var(--padding, 0.6rem 0.8rem);
     border-radius: var(--border-radius);
     -webkit-transition: opacity 0.3s;
     -o-transition: opacity 0.3s;
@@ -1535,8 +1534,8 @@ themeToggle.innerHTML = `
     .theme-toggle {
         display: flex;
         position: relative;
-        width: 1.4rem;
-        height: 1.4rem;
+        width: 1.2rem;
+        height: 1.2rem;
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
     }
