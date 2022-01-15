@@ -238,8 +238,10 @@
             </section>
         </article>
         <article id="explore" class="page page-layout hide-completely">
-            <h1>Explore</h1>
-            <div id="query_results_list" class="grid"></div>
+            <section class="flex direction-column">
+                <h1 id="explore_heading">Explore</h1>
+                <div id="query_results_list" class="grid"></div>
+            </section>
         </article>
         <article id="article" class="page page-layout hide-completely">
             <section class="hero-section">
@@ -588,11 +590,7 @@
             let params = {}
             let searchParams
             if (targetPage === '') {
-                if (typeof myFloID === "undefined") {
-                    pageId = 'landing'
-                } else {
-                    pageId = 'main_page'
-                }
+                pageId = 'main_page'
             } else {
                 if (targetPage.includes('/')) {
                     if (targetPage.includes('?')) {
@@ -610,7 +608,6 @@
                     pageId = targetPage
                 }
             }
-            if (typeof myFloID === "undefined" && !(['sign_up', 'sign_in', 'loading', 'landing'].includes(pageId))) return
             if (searchParams) {
                 const urlSearchParams = new URLSearchParams('?' + searchParams);
                 params = Object.fromEntries(urlSearchParams.entries());
@@ -638,11 +635,11 @@
                     break;
                 case 'article':
                     targetPage = 'article'
-                    renderArticle(params.articleID)
+                    await renderArticle(params.articleID)
                     break;
                 case 'explore':
                     targetPage = 'explore'
-                    renderArticle(params.articleID)
+                    renderExplorePage(params)
                     break;
                 case 'dashboard':
                     targetPage = 'dashboard'
@@ -777,7 +774,12 @@
         }
 
         const getArticles = async () => {
-            await floCloudAPI.requestObjectData('articles')
+            await Promise.all([
+                floCloudAPI.requestObjectData('articles'),
+                floCloudAPI.requestObjectData('articlesContent')
+            ])
+            delete floGlobals.appObjects.articlesContent
+            showPage(window.location.hash, { firstLoad: true })
         }
 
         function getArrayOfObj(obj) {
@@ -809,13 +811,33 @@
 
         }
         async function renderArticle(articleID) {
-            await floCloudAPI.requestObjectData(articleID)
-            const articleBody = floGlobals.appObjects[articleID]
-            const { title, published, readTime } = floGlobals.appObjects.articles[articleID]
+            const allArticles = await compactIDB.readData('appObjects', 'articlesContent')
+            const { title, published, readTime, contributors } = floGlobals.appObjects.articles[articleID]
             getRef('article_title').textContent = title
             getRef('published_time').textContent = getFormattedTime(published, 'date-only')
             getRef('reading_time').textContent = `${readTime} Min read`
-            getRef('article_body').innerHTML = articleBody
+            getRef('article_body').innerHTML = allArticles[articleID]
+            const frag = document.createDocumentFragment()
+            contributors.forEach(id => {
+                frag.append(createElement('div', {
+                    textContent: id,
+                    className: 'contributor'
+                }))
+            })
+            getRef('article_contributors').innerHTML = ''
+            getRef('article_contributors').append(frag)
+        }
+
+        function renderExplorePage(params) {
+            const { type, query } = params
+            const frag = document.createDocumentFragment()
+            const options = (type === 'category') ? { keys: ['category'] } : { keys: ['title', 'category', 'tags'], threshold: 0.3 }
+            const fuse = new Fuse(getArrayOfObj(floGlobals.appObjects.articles).sort((a, b) => b.published - a.published), options)
+            const searchResult = fuse.search(query).map(v => v.item)
+            searchResult.forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
+            getRef('explore_heading').textContent = `${type === 'category' ? 'Explore' : 'Related to'} ${query}`
+            getRef('query_results_list').innerHTML = ''
+            getRef('query_results_list').append(frag)
         }
 
         async function renderPublishingRequests() {
@@ -834,12 +856,12 @@
             if (e.target.closest('.publish-button')) {
                 const button = e.target.closest('.publish-button');
                 const vc = button.closest('.request-card').dataset.vc;
-                const { message: { articleID, category, content, title, tags, readTime }, vectorClock } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc];
+                const { message: { articleID, category, content, contributors, title, tags, readTime }, vectorClock } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc];
                 const isPublished = floGlobals.appObjects['articles'].hasOwnProperty(articleID)
                 getConfirmation(`${isPublished ? 'Update' : 'Publish'} article?`).then(res => {
                     if (res) {
                         floGlobals.appObjects['publishedVc'][vectorClock] = true
-                        floGlobals.appObjects[articleID] = content
+                        floGlobals.appObjects.articlesContent[articleID] = content
                         if (isPublished) {
                             floGlobals.appObjects['articles'][articleID]['updated'] = Date.now();
                         } else {
@@ -847,13 +869,14 @@
                             floGlobals.appObjects['articles'][articleID]['published'] = Date.now();
                         }
                         floGlobals.appObjects['articles'][articleID].category = category
+                        floGlobals.appObjects['articles'][articleID].contributors = contributors
                         floGlobals.appObjects['articles'][articleID].title = title
                         floGlobals.appObjects['articles'][articleID].tags = tags
                         floGlobals.appObjects['articles'][articleID].readTime = readTime
                         Promise.all([
                             floCloudAPI.updateObjectData('articles'),
                             floCloudAPI.updateObjectData('publishedVc'),
-                            floCloudAPI.resetObjectData(articleID)
+                            floCloudAPI.updateObjectData('articlesContent'),
                         ]).then(() => {
                             notify(`${isPublished ? 'Updated' : 'Published'} article`, 'success')
                             button.closest('.request-card').remove()
@@ -886,7 +909,7 @@
                     keys: ['title', 'tags', 'category'],
                     threshold: 0.3
                 }
-                const fuse = new Fuse(getArrayOfObj(floGlobals.appObjects.articles), options)
+                const fuse = new Fuse(getArrayOfObj(floGlobals.appObjects.articles).sort((a, b) => b.published - a.published), options)
                 const searchResult = fuse.search(searchKey).map(v => v.item)
                 getRef('search_suggestions').innerHTML = ''
                 if (searchResult.length) {
@@ -919,24 +942,24 @@
             }
         }, 100))
 
+        getRef('search_articles').addEventListener('keyup', e => {
+            if (e.target.value.trim() !== '' && e.code === 'Enter') {
+                location.hash = `#/explore?type=search&query=${e.target.value.trim()}`
+                e.target.value = ''
+            }
+        })
+
 
 
         function getSignedIn() {
             return new Promise((resolve, reject) => {
-                if (window.location.hash.includes('sign_in') || window.location.hash.includes('sign_up')) {
-                    showPage(window.location.hash)
-                } else {
-                    showPage('landing', { isPreview: location.hash.includes('preview') })
-                }
                 getRef('sign_in_button').onclick = () => {
                     resolve(getRef('private_key_field').value.trim())
                     getRef('private_key_field').value = ''
-                    showPage('loading')
                 }
                 getRef('sign_up_button').onclick = () => {
                     resolve(getRef('generated_private_key').value.trim())
                     getRef('generated_private_key').value = ''
-                    showPage('loading')
                 }
             })
         }
@@ -962,15 +985,15 @@
                 getRef('user_flo_id').value = myFloID
                 floGlobals.isSubAdmin = floGlobals.subAdmins.includes(myFloID)
                 if (floGlobals.isSubAdmin) {
-                    getRef('publishing_requests').addEventListener('click', handleRequestClick)
-                    document.querySelectorAll('.admin-option').forEach(elem => elem.classList.remove('hide-completely'))
+                    getRef('publishing_requests').addEventListener('click', handleRequestClick);
+                    document.querySelectorAll('.admin-option').forEach(elem => elem.classList.remove('hide-completely'));
+                    floGlobals.appObjects.articlesContent = await compactIDB.readData('appObjects', 'articlesContent')
                 } else {
                     getRef('publishing_requests').removeEventListener('click', handleRequestClick)
                     document.querySelectorAll('.admin-option').forEach(elem => elem.classList.add('hide-completely'))
                 }
                 if (location.hash.includes('sign_in') || location.hash.includes('sign_up'))
                     location.hash = floGlobals.isSubAdmin ? '#/dashboard' : '#/home'
-                showPage(window.location.hash, { firstLoad: true })
                 console.log(result)
             }).catch(error => console.error(error))
         }
@@ -9930,7 +9953,7 @@
                                 promises[i] = compactIDB.readAllData(loadData[i])
                             Promise.all(promises).then(results => {
                                 for (var i = 0; i < loadData.length; i++)
-                                    floGlobals[loadData[i]] = results[i]
+                                    floGlobals[loadData[i]] = results[i];
                                 resolve("Loaded Data from app IDB")
                             }).catch(error => reject(error))
                         })

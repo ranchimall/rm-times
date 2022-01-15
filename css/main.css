@@ -395,6 +395,7 @@ ul {
 }
 
 .logo {
+  position: absolute;
   color: inherit;
   display: grid;
   align-items: center;
@@ -653,6 +654,7 @@ main {
 }
 
 theme-toggle {
+  margin-left: auto;
   padding: 0 0.5rem;
 }
 
@@ -669,7 +671,8 @@ theme-toggle {
   font-size: 0.9rem;
 }
 
-#latest_articles_list {
+#latest_articles_list,
+#query_results_list {
   margin: 1rem 0;
   gap: 1.6rem;
 }
@@ -701,6 +704,10 @@ theme-toggle {
   gap: 0.3rem;
 }
 
+#explore {
+  padding-top: 1.5rem;
+}
+
 #article {
   gap: 2rem 0;
   padding-bottom: 3rem;
@@ -711,6 +718,19 @@ theme-toggle {
   gap: 0.5rem;
   grid-template-columns: minmax(0, 1fr);
   padding-top: 1.5rem;
+}
+
+#article_contributors {
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.5rem 0 1rem 0;
+}
+
+.contributor {
+  font-size: 0.8rem;
+  background-color: rgba(var(--text-color), 0.06);
+  border-radius: 0.3rem;
+  padding: 0.3rem 0.5rem;
 }
 
 #dashboard {
