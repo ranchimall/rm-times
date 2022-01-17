@@ -24,7 +24,8 @@ body {
     --foreground-color: rgb(255, 255, 255);
     --danger-color: rgb(255, 75, 75);
     --green: #1cad59;
-    --yellow: #f3a600;
+    --like-color: #e91e63;
+
     scrollbar-width: thin;
   }
 
@@ -42,7 +43,6 @@ body[data-theme="dark"] {
     --foreground-color: rgb(24, 24, 24);
     --danger-color: rgb(255, 106, 106);
     --green: #00e676;
-    --yellow: #ffd13a;
   }
   sm-popup::part(popup) {
     background-color: var(--foreground-color);
@@ -581,13 +581,7 @@ main {
   margin: 0 1rem;
   z-index: 1;
   background-color: rgba(var(--background-color), 1);
-  clip-path: circle(0 at 1.5rem);
-  transition: clip-path 0.1s;
-  &.expanded {
-    transition: clip-path 0.3s;
-    clip-path: circle(200%);
-  }
-  button {
+  .icon-only {
     margin-right: 0.5rem;
   }
 }
@@ -690,6 +684,75 @@ theme-toggle {
   background-color: rgba(var(--text-color), 0.06);
   border-radius: 0.3rem;
   padding: 0.3rem 0.5rem;
+}
+.up-vote {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  position: relative;
+  padding: 0.8rem;
+  border-radius: 2rem;
+  background-color: var(--foreground-color);
+  -webkit-box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+  border: solid rgba(var(--text-color), 0.2) thin;
+  & > * {
+    pointer-events: none;
+  }
+
+  &:active {
+    -webkit-transform: none;
+    transform: none;
+    .icon {
+      -webkit-transform: scale(0.7);
+      transform: scale(0.7);
+    }
+  }
+
+  &.liked {
+    background-color: var(--like-color);
+    color: #fff;
+    .icon {
+      fill: #fff;
+    }
+  }
+
+  .expanding-heart,
+  .ring {
+    grid-area: 1/1;
+  }
+  & .icon {
+    grid-area: 1/1;
+    fill: var(--like-color);
+    height: 1.5rem;
+    width: 1.5rem;
+    -webkit-transition: -webkit-transform 0.2s;
+    transition: -webkit-transform 0.2s;
+    transition: transform 0.2s;
+    transition: transform 0.2s, -webkit-transform 0.2s;
+  }
+}
+
+.ring {
+  border: 0.1rem solid var(--like-color);
+  border-radius: 50%;
+  height: 0.5rem;
+  width: 0.5rem;
+  justify-self: center;
+}
+
+.temp-count,
+#like_count {
+  grid-area: 1/2;
+}
+
+.temp-count:not(:empty),
+#like_count:not(:empty) {
+  margin-left: 0.4rem;
+}
+
+footer {
+  padding: 3rem 1.5rem;
+  justify-items: center;
 }
 
 #dashboard {

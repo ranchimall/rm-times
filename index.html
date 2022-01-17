@@ -183,7 +183,7 @@
                         d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
                 </svg>
             </button>
-            <div id="expanding_search">
+            <div id="expanding_search" class="hide-completely">
                 <div class="flex align-center">
                     <button class="icon-only" onclick="toggleSearch()">
                         <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
@@ -192,14 +192,16 @@
                             <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
                         </svg>
                     </button>
-                    <sm-input id="search_articles" placeholder="Search articles" type="search">
-                        <svg class="icon" slot="icon" xmlns="http://www.w3.org/2000/svg" height="24px"
-                            viewBox="0 0 24 24" width="24px" fill="#000000">
-                            <path d="M0 0h24v24H0V0z" fill="none" />
-                            <path
-                                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
-                        </svg>
-                    </sm-input>
+                    <div class="w-100">
+                        <sm-input id="search_articles" placeholder="Search articles" type="search">
+                            <svg class="icon" slot="icon" xmlns="http://www.w3.org/2000/svg" height="24px"
+                                viewBox="0 0 24 24" width="24px" fill="#000000">
+                                <path d="M0 0h24v24H0V0z" fill="none" />
+                                <path
+                                    d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                            </svg>
+                        </sm-input>
+                    </div>
                 </div>
                 <div id="search_suggestions" class="flex direction-column hide-completely"></div>
             </div>
@@ -240,7 +242,8 @@
         <article id="explore" class="page page-layout hide-completely">
             <section class="flex direction-column">
                 <h1 id="explore_heading">Explore</h1>
-                <div id="query_results_list" class="grid"></div>
+                <div id="query_results_list" class="grid observe-empty-state"></div>
+                <p class="empty-state">No related articles</p>
             </section>
         </article>
         <article id="article" class="page page-layout hide-completely">
@@ -256,6 +259,18 @@
                 <div id="article_contributors" class="flex"></div>
                 <span>created with RanchiMall Content collaboration app</span>
             </section>
+            <footer class="grid gap-1-5">
+                <h4>Loved the article? Don't forget leave a like.</h4>
+                <button id="upvote_button" class="button up-vote">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                        fill="#000000">
+                        <path d="M0 0h24v24H0z" fill="none" />
+                        <path
+                            d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                    <div id="like_count">Loading...</div>
+                </button>
+            </footer>
         </article>
         <article id="dashboard" class="page page-layout hide-completely">
             <div class="flex space-between align-center">
@@ -810,7 +825,7 @@
             getRef('news_categories_list').append(frag)
 
         }
-        async function renderArticle(articleID) {
+        async function renderArticle(articleID, firstLoad = true) {
             const allArticles = await compactIDB.readData('appObjects', 'articlesContent')
             const { title, published, readTime, contributors } = floGlobals.appObjects.articles[articleID]
             getRef('article_title').textContent = title
@@ -826,12 +841,35 @@
             })
             getRef('article_contributors').innerHTML = ''
             getRef('article_contributors').append(frag)
+            totalVotes = floGlobals.appObjects.articles[articleID].votes ? floGlobals.appObjects.articles[articleID].votes : 0
+            floCloudAPI.requestGeneralData(`article_${articleID}_votes`, {
+                lowerVectorClock: floGlobals.appObjects.articles[articleID].lastCountedVC,
+                callback: (allVotes, e) => {
+                    if (firstLoad) {
+                        let first = true
+                        for (const vote in allVotes) {
+                            if (first) {
+                                first = false
+                                continue
+                            }
+                            totalVotes += allVotes[vote].message.voteCount || 1
+                        }
+                        getRef('like_count').textContent = getRelativeCount(totalVotes)
+                    } else {
+                        for (const msg in allVotes) {
+                            if (typeof myFloID === 'undefined' || allVotes[msg].senderID !== myFloID)
+                                animateLikeCount(allVotes[msg].message.voteCount)
+                        }
+                    }
+                    firstLoad = false
+                }
+            })
         }
 
         function renderExplorePage(params) {
             const { type, query } = params
             const frag = document.createDocumentFragment()
-            const options = (type === 'category') ? { keys: ['category'] } : { keys: ['title', 'category', 'tags'], threshold: 0.3 }
+            const options = (type === 'category') ? { keys: ['category'], threshold: 0 } : { keys: ['title', 'category', 'tags'], threshold: 0.3 }
             const fuse = new Fuse(getArrayOfObj(floGlobals.appObjects.articles).sort((a, b) => b.published - a.published), options)
             const searchResult = fuse.search(query).map(v => v.item)
             searchResult.forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
@@ -865,8 +903,11 @@
                         if (isPublished) {
                             floGlobals.appObjects['articles'][articleID]['updated'] = Date.now();
                         } else {
-                            floGlobals.appObjects.articles[articleID] = {}
-                            floGlobals.appObjects['articles'][articleID]['published'] = Date.now();
+                            floGlobals.appObjects.articles[articleID] = {
+                                published: Date.now(),
+                                votes: 0,
+                                lastCountedVC: ''
+                            }
                         }
                         floGlobals.appObjects['articles'][articleID].category = category
                         floGlobals.appObjects['articles'][articleID].contributors = contributors
@@ -896,11 +937,63 @@
             }
         }
 
+        let isSearchOn = false
         function toggleSearch() {
-            if (!getRef('expanding_search').classList.contains('expanded')) {
-                getRef('search_articles').focusIn()
+            const animOptions = {
+                easing: 'ease',
+                fill: 'forwards'
             }
-            getRef('expanding_search').classList.toggle('expanded')
+            if (!isSearchOn) {
+                getRef('expanding_search').classList.remove('hide-completely')
+                getRef('search_articles').focusIn()
+                animateTo(getRef('expanding_search').children[0].children[0], [
+                    { opacity: 0 },
+                    { opacity: 1 },
+                ], {
+                    ...animOptions,
+                    duration: 150
+                })
+                animateTo(getRef('search_articles').parentNode, [
+                    {
+                        transform: 'translateX(-2.8rem)',
+                        opacity: 1
+                    },
+                    {
+                        transform: 'none',
+                        opacity: 1
+                    },
+                ], {
+                    ...animOptions,
+                    duration: 150
+                })
+                isSearchOn = true
+            } else {
+                animateTo(getRef('expanding_search').children[0].children[0], [
+                    { opacity: 1 },
+                    { opacity: 0 },
+                ], {
+                    ...animOptions,
+                    duration: 100
+                })
+                animateTo(getRef('search_articles').parentNode, [
+                    {
+                        transform: 'none',
+                        opacity: 1
+                    },
+                    {
+                        transform: 'translateX(-2.8rem)',
+                        opacity: 0
+                    },
+                ], {
+                    ...animOptions,
+                    duration: 100
+                })
+                    .onfinish = () => {
+                        getRef('expanding_search').classList.add('hide-completely');
+                        getRef('search_articles').value = ''
+                        isSearchOn = false
+                    }
+            }
         }
         getRef('search_articles').addEventListener('input', debounce((e) => {
             const searchKey = e.target.value.trim()
@@ -946,9 +1039,100 @@
             if (e.target.value.trim() !== '' && e.code === 'Enter') {
                 location.hash = `#/explore?type=search&query=${e.target.value.trim()}`
                 e.target.value = ''
+                toggleSearch()
             }
         })
+        const slideInUp = [
+            {
+                opacity: 0,
+                transform: 'translateY(1rem)'
+            },
+            {
+                opacity: 1,
+                transform: 'translateY(0)'
+            },
+        ]
+        const slideOutUp = [
+            {
+                opacity: 1,
+                transform: 'translateY(0)'
+            },
+            {
+                opacity: 0,
+                transform: 'translateY(-1rem)'
+            },
+        ]
 
+        let tempVoteCount = 0
+        getRef('upvote_button').addEventListener('mouseup', function () {
+            if (myFloID) {
+                animateLikeCount(1)
+                tempVoteCount++;
+                const animOptions = {
+                    fill: 'forwards',
+                    duration: 300,
+                    ease: 'easing',
+                }
+                const ring = document.createElement('div')
+                ring.classList.add('ring')
+                ring.animate([
+                    { transform: 'none' },
+                    { transform: 'scale(6)', opacity: 0 }
+                ], animOptions).onfinish = e => {
+                    e.target.cancel()
+                    ring.remove()
+                }
+                this.append(ring)
+                this.firstElementChild.animate([
+                    { transform: 'scale(0.5)' },
+                    { transform: 'scale(1.4)', offset: 0.5 },
+                    { transform: 'none' },
+                ], animOptions).onfinish = e => e.target.cancel()
+            }
+        })
+        function animateLikeCount(voteCount = 1) {
+            const animOptions = {
+                fill: 'forwards',
+                duration: 150,
+                ease: 'easing',
+            }
+            totalVotes += voteCount
+            getRef('like_count').animate(slideOutUp, animOptions)
+                .onfinish = (e) => {
+                    e.target.cancel()
+                }
+            const tempCount = document.createElement('div')
+            tempCount.classList.add('temp-count')
+            tempCount.textContent = getRelativeCount(totalVotes)
+            getRef('like_count').after(tempCount)
+            tempCount.animate(slideInUp, animOptions)
+                .onfinish = () => {
+                    getRef('like_count').textContent = getRelativeCount(totalVotes)
+                    tempCount.remove()
+                }
+        }
+        getRef('upvote_button').addEventListener('click', debounce(() => {
+            if (myFloID) {
+                floCloudAPI.sendGeneralData({
+                    voteCount: tempVoteCount,
+                }, `article_${pagesData.params.articleID}_votes`)
+                    .then(res => {
+                        tempVoteCount = 0
+                        console.log('up voted')
+                    })
+                    .catch(err => console.log(err))
+            } else {
+                showPopup('sign_in_popup')
+            }
+        }, 300))
+        function getRelativeCount(count) {
+            if (count < 1000)
+                return count
+            else if (count < 1000000)
+                return parseFloat((count / 1000).toFixed(1)) + 'K'
+            else if (count < 1000000000)
+                return parseFloat((count / 1000000).toFixed(1)) + 'M'
+        }
 
 
         function getSignedIn() {
@@ -987,6 +1171,64 @@
                 if (floGlobals.isSubAdmin) {
                     getRef('publishing_requests').addEventListener('click', handleRequestClick);
                     document.querySelectorAll('.admin-option').forEach(elem => elem.classList.remove('hide-completely'));
+                    await floCloudAPI.requestObjectData('articleVotes')
+                    const articlesVotesProm = []
+                    const articleIDs = []
+                    for (const articleKey in floGlobals.appObjects.articles) {
+                        if (floGlobals.appObjects.articleVotes[articleKey] & floGlobals.appObjects.articleVotes[articleKey].lastCountedVC !== '') {
+                            articlesVotesProm.push(
+                                floCloudAPI.requestGeneralData(`article_${articleKey}_votes`),
+                                {
+                                    lowerVectorClock: floGlobals.appObjects.articleVotes[articleKey].lastCountedVC
+                                }
+                            )
+                        } else {
+                            articlesVotesProm.push(
+                                floCloudAPI.requestGeneralData(`article_${articleKey}_votes`)
+                            )
+                        }
+                        articleIDs.push(articleKey)
+                    }
+                    Promise.all(articlesVotesProm).then(res => {
+                        res.forEach((articleVotes, index) => {
+                            if (!floGlobals.appObjects.articleVotes.hasOwnProperty(articleIDs[index])) {
+                                floGlobals.appObjects.articleVotes[articleIDs[index]].votes = {}
+                                floGlobals.appObjects.articles[articleIDs[index]].lastCountedVC = ''
+                            }
+                            let isFirst
+                            if (floGlobals.appObjects.articles[articleIDs[index]].lastCountedVC === '') {
+                                articleVotes = floGlobals.generalData[`article_${articleIDs[index]}_votes|${floGlobals.adminID}|${floGlobals.application}`]
+                            } else {
+                                isFirst = true
+                            }
+                            for (const voteKey in articleVotes) {
+                                const { senderID, message: { voteCount }, type, vectorClock } = articleVotes[voteKey]
+                                if (isFirst && floGlobals.appObjects.articles[articleIDs[index]].lastCountedVC === vectorClock) { // Skip over already counted VC
+                                    isFirst = false
+                                    continue
+                                }
+                                const { votes, lastCountedVC } = floGlobals.appObjects.articleVotes[articleIDs[index]];
+                                if (votes[senderID]) {
+                                    floGlobals.appObjects.articleVotes[articleIDs[index]].votes[senderID] += voteCount || 1
+                                } else {
+                                    floGlobals.appObjects.articleVotes[articleIDs[index]].votes[senderID] = voteCount || 1
+                                }
+                                floGlobals.appObjects.articles[articleIDs[index]].lastCountedVC = vectorClock
+                            }
+                            let totalArticleVotes = 0
+                            for (const voter in floGlobals.appObjects.articleVotes[articleIDs[index]].votes) {
+                                totalArticleVotes += floGlobals.appObjects.articleVotes[articleIDs[index]].votes[voter]
+                            }
+                            floGlobals.appObjects.articles[articleIDs[index]].votes = totalArticleVotes
+                        })
+                        Promise.all([
+                            floCloudAPI.updateObjectData('articles'),
+                            floCloudAPI.updateObjectData('articleVotes')
+                        ])
+                            .then(() => {
+                                console.log('calculated votes')
+                            })
+                    })
                     floGlobals.appObjects.articlesContent = await compactIDB.readData('appObjects', 'articlesContent')
                 } else {
                     getRef('publishing_requests').removeEventListener('click', handleRequestClick)
