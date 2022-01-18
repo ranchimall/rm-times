@@ -825,6 +825,8 @@
             getRef('news_categories_list').append(frag)
 
         }
+
+        const openedArticles = {}
         async function renderArticle(articleID, firstLoad = true) {
             const allArticles = await compactIDB.readData('appObjects', 'articlesContent')
             const { title, published, readTime, contributors } = floGlobals.appObjects.articles[articleID]
@@ -841,29 +843,32 @@
             })
             getRef('article_contributors').innerHTML = ''
             getRef('article_contributors').append(frag)
-            totalVotes = floGlobals.appObjects.articles[articleID].votes ? floGlobals.appObjects.articles[articleID].votes : 0
-            floCloudAPI.requestGeneralData(`article_${articleID}_votes`, {
-                lowerVectorClock: floGlobals.appObjects.articles[articleID].lastCountedVC,
-                callback: (allVotes, e) => {
-                    if (firstLoad) {
-                        let first = true
-                        for (const vote in allVotes) {
-                            if (first) {
-                                first = false
-                                continue
+            if (!openedArticles.hasOwnProperty(articleID)) {
+                floCloudAPI.requestGeneralData(`article_${articleID}_votes`, {
+                    lowerVectorClock: floGlobals.appObjects.articles[articleID].lastCountedVC,
+                    callback: (allVotes, e) => {
+                        if (firstLoad) {
+                            let first = true
+                            for (const vote in allVotes) {
+                                if (first) {
+                                    first = false
+                                    continue
+                                }
+                                floGlobals.appObjects.articles[articleID].votes += allVotes[vote].message.voteCount || 1
                             }
-                            totalVotes += allVotes[vote].message.voteCount || 1
+                            getRef('like_count').textContent = floGlobals.appObjects.articles[articleID].votes
+                        } else {
+                            for (const msg in allVotes) {
+                                animateLikeCount(allVotes[msg].message.voteCount, articleID)
+                            }
                         }
-                        getRef('like_count').textContent = getRelativeCount(totalVotes)
-                    } else {
-                        for (const msg in allVotes) {
-                            if (typeof myFloID === 'undefined' || allVotes[msg].senderID !== myFloID)
-                                animateLikeCount(allVotes[msg].message.voteCount)
-                        }
+                        firstLoad = false
                     }
-                    firstLoad = false
-                }
-            })
+                })
+                openedArticles[articleID] = true
+            } else {
+                getRef('like_count').textContent = floGlobals.appObjects.articles[articleID].votes
+            }
         }
 
         function renderExplorePage(params) {
@@ -1066,7 +1071,6 @@
         let tempVoteCount = 0
         getRef('upvote_button').addEventListener('mouseup', function () {
             if (myFloID) {
-                animateLikeCount(1)
                 tempVoteCount++;
                 const animOptions = {
                     fill: 'forwards',
@@ -1090,24 +1094,25 @@
                 ], animOptions).onfinish = e => e.target.cancel()
             }
         })
-        function animateLikeCount(voteCount = 1) {
+        function animateLikeCount(voteCount = 1, articleID) {
+            console.log('called')
             const animOptions = {
                 fill: 'forwards',
                 duration: 150,
                 ease: 'easing',
             }
-            totalVotes += voteCount
+            floGlobals.appObjects.articles[articleID].votes += voteCount
             getRef('like_count').animate(slideOutUp, animOptions)
                 .onfinish = (e) => {
                     e.target.cancel()
                 }
             const tempCount = document.createElement('div')
             tempCount.classList.add('temp-count')
-            tempCount.textContent = getRelativeCount(totalVotes)
+            tempCount.textContent = floGlobals.appObjects.articles[articleID].votes
             getRef('like_count').after(tempCount)
             tempCount.animate(slideInUp, animOptions)
                 .onfinish = () => {
-                    getRef('like_count').textContent = getRelativeCount(totalVotes)
+                    getRef('like_count').textContent = floGlobals.appObjects.articles[articleID].votes
                     tempCount.remove()
                 }
         }
@@ -1125,14 +1130,6 @@
                 showPopup('sign_in_popup')
             }
         }, 300))
-        function getRelativeCount(count) {
-            if (count < 1000)
-                return count
-            else if (count < 1000000)
-                return parseFloat((count / 1000).toFixed(1)) + 'K'
-            else if (count < 1000000000)
-                return parseFloat((count / 1000000).toFixed(1)) + 'M'
-        }
 
 
         function getSignedIn() {
