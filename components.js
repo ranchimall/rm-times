@@ -2228,9 +2228,8 @@ smSelect.innerHTML = `
     -ms-grid-columns: 1fr auto;
     grid-template-columns: 1fr auto;
         grid-template-areas: 'heading heading' '. .';
-    padding: 0.4rem 0.8rem;
+    padding: var(--padding,0.6rem 0.8rem);
     background: rgba(var(--text-color), 0.06);
-    border: solid 1px rgba(var(--text-color), 0.2);
     -webkit-box-align: center;
         -ms-flex-align: center;
             align-items: center;
@@ -2359,7 +2358,18 @@ customElements.define('sm-select', class extends HTMLElement {
         return this.getAttribute('value')
     }
     set value(val) {
-        this.setAttribute('value', val)
+        const selectedOption = this.availableOptions.find(option => option.getAttribute('value') === val)
+        if (selectedOption) {
+            this.setAttribute('value', val)
+            this.selectedOptionText.textContent = `${this.label}${selectedOption.textContent}`;
+            if (this.previousOption) {
+                this.previousOption.classList.remove('check-selected')
+            }
+            selectedOption.classList.add('check-selected')
+            this.previousOption = selectedOption
+        } else {
+            console.warn(`There is no option with ${val} as value`)
+        }
     }
 
     reset(fire = true) {
@@ -2435,13 +2445,7 @@ customElements.define('sm-select', class extends HTMLElement {
     handleOptionSelection(e) {
         if (this.previousOption !== document.activeElement) {
             this.value = document.activeElement.getAttribute('value')
-            this.selectedOptionText.textContent = `${this.label}${document.activeElement.textContent}`;
             this.fireEvent()
-            if (this.previousOption) {
-                this.previousOption.classList.remove('check-selected')
-            }
-            document.activeElement.classList.add('check-selected')
-            this.previousOption = document.activeElement
         }
     }
     handleClick(e) {
@@ -3627,6 +3631,7 @@ customElements.define('tags-input', class extends HTMLElement {
 
         this.reset = this.reset.bind(this)
         this.handleInput = this.handleInput.bind(this)
+        this.addTag = this.addTag.bind(this)
         this.handleKeydown = this.handleKeydown.bind(this)
         this.handleClick = this.handleClick.bind(this)
         this.removeTag = this.removeTag.bind(this)
@@ -3636,6 +3641,10 @@ customElements.define('tags-input', class extends HTMLElement {
     }
     get value() {
         return [...this.tags].join()
+    }
+    set value(arr) {
+        this.reset();
+        [...new Set(arr)].forEach(tag => this.addTag(tag))
     }
     get isValid() {
         return this.tags.size
@@ -3649,6 +3658,17 @@ customElements.define('tags-input', class extends HTMLElement {
         while (this.input.previousElementSibling) {
             this.input.previousElementSibling.remove()
         }
+    }
+    addTag(tagValue) {
+        const tag = document.createElement('span')
+        tag.dataset.value = tagValue
+        tag.className = 'tag'
+        tag.innerHTML = `
+            <span class="tag-text">${tagValue}</span>
+            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 10.586l4.95-4.95 1.414 1.414-4.95 4.95 4.95 4.95-1.414 1.414-4.95-4.95-4.95 4.95-1.414-1.414 4.95-4.95-4.95-4.95L7.05 5.636z"/></svg>
+            `
+        this.input.before(tag)
+        this.tags.add(tagValue)
     }
     handleInput(e) {
         const inputValueLength = e.target.value.trim().length
@@ -3682,17 +3702,8 @@ customElements.define('tags-input', class extends HTMLElement {
                         duration: 300,
                         easing: 'ease'
                     })
-                }
-                else {
-                    const tag = document.createElement('span')
-                    tag.dataset.value = tagValue
-                    tag.className = 'tag'
-                    tag.innerHTML = `
-                        <span class="tag-text">${tagValue}</span>
-                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 10.586l4.95-4.95 1.414 1.414-4.95 4.95 4.95 4.95-1.414 1.414-4.95-4.95-4.95 4.95-1.414-1.414 4.95-4.95-4.95-4.95L7.05 5.636z"/></svg>
-                        `
-                    this.input.before(tag)
-                    this.tags.add(tagValue)
+                } else {
+                    this.addTag(tagValue)
                 }
                 e.target.value = ''
                 e.target.setAttribute('size', '3')

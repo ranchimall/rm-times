@@ -228,8 +228,8 @@
                 <div id="news_categories_list" class="flex"></div>
             </section>
             <section>
-                <h5>Featured</h5>
-                <h3>A Wake Up Call for India - Analyzing the falling GDP</h3>
+                <h5>Trending</h5>
+                <div id="trending_article_container"></div>
             </section>
             <section id="lastest_articles_section">
                 <div class="flex align-center space-between">
@@ -273,15 +273,20 @@
             </footer>
         </article>
         <article id="dashboard" class="page page-layout hide-completely">
-            <div class="flex space-between align-center">
-                <h2>Dashboard</h2>
-                <strip-select>
-                    <strip-option value="requests" selected>Requests</strip-option>
-                    <strip-option value="analytics">Analytics</strip-option>
+            <div class="flex justify-center align-center">
+                <strip-select id="section_selector">
+                    <strip-option value="analytic" selected>Analytics</strip-option>
+                    <strip-option value="request">Requests</strip-option>
                 </strip-select>
             </div>
-            <ul id="publishing_requests" class="grid gap-1-5 observe-empty-state"></ul>
-            <p class="empty-state">No requests</p>
+            <section id="analytic_section" class="admin-section">
+                <ul id="article_analytics" class="grid gap-1-5 observe-empty-state"></ul>
+                <p class="empty-state">No articles</p>
+            </section>
+            <section id="request_section" class="admin-section hide-completely">
+                <ul id="publishing_requests" class="grid gap-1-5 observe-empty-state"></ul>
+                <p class="empty-state">No requests</p>
+            </section>
         </article>
     </main>
     <sm-popup id="preview_popup">
@@ -301,6 +306,54 @@
             </h4>
         </header>
         <section id="preview_container"></section>
+    </sm-popup>
+    <sm-popup id="edit_popup">
+        <header slot="header" class="popup__header">
+            <div class="flex align-center">
+                <button class="popup__header__close" onclick="hidePopup()">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                        fill="#000000">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path
+                            d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    </svg>
+                </button>
+            </div>
+            <h4>
+                Edit
+            </h4>
+        </header>
+        <section class="grid gap-1-5">
+            <div class="grid gap-0-5">
+                <h5>Title</h5>
+                <sm-input id="edit_title"></sm-input>
+            </div>
+            <div class="grid gap-0-5">
+                <h5>Summary</h5>
+                <sm-textarea id="edit_summary" rows="4"></sm-textarea>
+            </div>
+            <div class="grid gap-0-5">
+                <h5>Select category</h5>
+                <sm-select id="edit_category">
+                    <sm-option value="art">Art</sm-option>
+                    <sm-option value="culture">Culture</sm-option>
+                    <sm-option value="entertainment">Entertainment</sm-option>
+                    <sm-option value="politics">Politics</sm-option>
+                    <sm-option value="science">Science</sm-option>
+                    <sm-option value="sports">Sports</sm-option>
+                    <sm-option value="tech">Tech</sm-option>
+                </sm-select>
+            </div>
+            <div class="grid gap-0-5">
+                <h5>Add tags</h5>
+                <tags-input id="edit_tags" limit="10"></tags-input>
+            </div>
+            <label class="grid gap-0-5">
+                <h5>Publishing date</h5>
+                <input type="datetime-local" id="edit_published">
+            </label>
+            <sm-button id="set_article_meta" variant="primary">Save</sm-button>
+        </section>
     </sm-popup>
     <sm-popup id="user_popup">
         <header slot="header" class="popup__header">
@@ -333,6 +386,31 @@
                     <time class="article-card__published"></time>
                 </div>
             </a>
+        </li>
+    </template>
+    <template id="article_row_template">
+        <li class="grid article-row">
+            <div class="grid gap-0-5">
+                <h4 class="article-card__title"></h4>
+                <time class="article-row__published"></time>
+            </div>
+            <div class="flex align-center">
+                <span class="article-row__votes"></span>
+                <svg class="icon button__icon--right" xmlns="http://www.w3.org/2000/svg" height="24px"
+                    viewBox="0 0 24 24" width="24px" fill="#000000">
+                    <path d="M0 0h24v24H0z" fill="none" />
+                    <path
+                        d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+            </div>
+            <button class="icon-only edit-article">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                    fill="#000000">
+                    <path d="M0 0h24v24H0V0z" fill="none" />
+                    <path
+                        d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" />
+                </svg>
+            </button>
         </li>
     </template>
     <template id="request_template">
@@ -661,7 +739,7 @@
                     await Promise.all([
                         floCloudAPI.requestObjectData('publishedVc'),
                         floCloudAPI.requestGeneralData('publishing_requests', {
-                            callback: (d, e) => renderPublishingRequests(d)
+                            callback: (d, e) => renderDashboard(d)
                         })
                     ])
                     break;
@@ -778,14 +856,29 @@
             },
             requestCard(details) {
                 const { message: { articleID, category, title }, time, vectorClock } = details
-                if (floGlobals.appObjects.publishedVc[vectorClock]) return
-                const clone = getRef('request_template').content.cloneNode(true).firstElementChild
-                clone.dataset.vc = vectorClock
-                clone.querySelector('.request-card__title').textContent = title
-                clone.querySelector('.request-card__time').textContent = getFormattedTime(time)
-                clone.querySelector('.publish-button').textContent = floGlobals.appObjects['articles'].hasOwnProperty(articleID) ? 'Update' : 'Publish'
+                if (floGlobals.appObjects.publishedVc[vectorClock]) {
+                    // const requestTime = parseInt(vectorClock.split('_')[0])
+                    // if ((Date.now() - requestTime) / 1000 > 604800) {
+                    //     delete floGlobals.appObjects.publishedVc[vectorClock]
+                    // }
+                } else {
+                    const clone = getRef('request_template').content.cloneNode(true).firstElementChild
+                    clone.dataset.vc = vectorClock
+                    clone.querySelector('.request-card__title').textContent = title
+                    clone.querySelector('.request-card__time').textContent = getFormattedTime(time)
+                    clone.querySelector('.publish-button').textContent = floGlobals.appObjects['articles'].hasOwnProperty(articleID) ? 'Update' : 'Publish'
+                    return clone
+                }
+            },
+            articleRow(articleID) {
+                const { category, title, published, votes } = floGlobals.appObjects.articles[articleID]
+                const clone = getRef('article_row_template').content.cloneNode(true).firstElementChild
+                clone.querySelector('.article-card__title').textContent = title
+                clone.querySelector('.article-row__published').textContent = relativeTime.from(published)
+                clone.querySelector('.article-row__votes').textContent = votes
+                clone.querySelector('.edit-article').dataset.articleId = articleID
                 return clone
-            }
+            },
         }
 
         const getArticles = async () => {
@@ -809,13 +902,9 @@
         }
 
         function renderHomepage() {
-            const sortedArticles = getArrayOfObj(floGlobals.appObjects.articles).sort((a, b) => b.published - a.published)
             const frag = document.createDocumentFragment()
-            sortedArticles.slice(0, 5).forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
-            getRef('latest_articles_list').innerHTML = ''
-            getRef('latest_articles_list').append(frag)
-
-            const categories = ['Art', 'Politics', 'Science', 'Tech']
+            // Render article topics
+            const categories = ['Art', 'Culture', 'Politics', 'Science', 'Tech']
             categories.forEach(category => frag.append(createElement('a', {
                 textContent: category,
                 attributes: { href: `#/explore?type=category&query=${category.toLowerCase()}` },
@@ -823,7 +912,31 @@
             })))
             getRef('news_categories_list').innerHTML = ''
             getRef('news_categories_list').append(frag)
-
+            // render latest articles
+            const arrOfArticles = getArrayOfObj(floGlobals.appObjects.articles)
+            const sortedArticles = arrOfArticles.sort((a, b) => b.published - a.published)
+            sortedArticles.slice(0, 4).forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
+            getRef('latest_articles_list').innerHTML = ''
+            getRef('latest_articles_list').append(frag)
+            // Render trending article card
+            let highestRatedArticle = arrOfArticles[0]
+            for (let i = 1; i < arrOfArticles.length; i++) {
+                if (highestRatedArticle.votes < arrOfArticles[i].votes) {
+                    highestRatedArticle = arrOfArticles[i]
+                }
+            }
+            const { category, title, published, readTime, summary, uid } = highestRatedArticle
+            getRef('trending_article_container').innerHTML = `
+                <a href="#/explore?type=category&query=${category}" class="article-card__category">${category}</a>
+                <a class="article-card--highlight grid" href="#/article?articleID=${uid}">
+                    <h3 id="trending_article__title">${title}</h3>
+                    <div class="flex">
+                        <span class="trending_article__read-time">${readTime} Min read</span>•<time
+                            class="trending_article__published">${relativeTime.from(published)}</time>
+                    </div>
+                    <p id="trending_article__summary">${summary}</p>
+                </a>
+            `
         }
 
         const openedArticles = {}
@@ -843,17 +956,13 @@
             })
             getRef('article_contributors').innerHTML = ''
             getRef('article_contributors').append(frag)
+            // implement live voting
             if (!openedArticles.hasOwnProperty(articleID)) {
                 floCloudAPI.requestGeneralData(`article_${articleID}_votes`, {
-                    lowerVectorClock: floGlobals.appObjects.articles[articleID].lastCountedVC,
+                    lowerVectorClock: floGlobals.appObjects.articles[articleID].lastCountedVC + 1,
                     callback: (allVotes, e) => {
                         if (firstLoad) {
-                            let first = true
                             for (const vote in allVotes) {
-                                if (first) {
-                                    first = false
-                                    continue
-                                }
                                 floGlobals.appObjects.articles[articleID].votes += allVotes[vote].message.voteCount || 1
                             }
                             getRef('like_count').textContent = floGlobals.appObjects.articles[articleID].votes
@@ -881,65 +990,6 @@
             getRef('explore_heading').textContent = `${type === 'category' ? 'Explore' : 'Related to'} ${query}`
             getRef('query_results_list').innerHTML = ''
             getRef('query_results_list').append(frag)
-        }
-
-        async function renderPublishingRequests() {
-            const requests = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`]
-            const frag = document.createDocumentFragment()
-            for (const key in requests) {
-                const card = render.requestCard(requests[key])
-                if (card)
-                    frag.prepend(card)
-            }
-            getRef('publishing_requests').innerHTML = ''
-            getRef('publishing_requests').append(frag)
-        }
-
-        function handleRequestClick(e) {
-            if (e.target.closest('.publish-button')) {
-                const button = e.target.closest('.publish-button');
-                const vc = button.closest('.request-card').dataset.vc;
-                const { message: { articleID, category, content, contributors, title, tags, readTime }, vectorClock } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc];
-                const isPublished = floGlobals.appObjects['articles'].hasOwnProperty(articleID)
-                getConfirmation(`${isPublished ? 'Update' : 'Publish'} article?`).then(res => {
-                    if (res) {
-                        floGlobals.appObjects['publishedVc'][vectorClock] = true
-                        floGlobals.appObjects.articlesContent[articleID] = content
-                        if (isPublished) {
-                            floGlobals.appObjects['articles'][articleID]['updated'] = Date.now();
-                        } else {
-                            floGlobals.appObjects.articles[articleID] = {
-                                published: Date.now(),
-                                votes: 0,
-                                lastCountedVC: ''
-                            }
-                        }
-                        floGlobals.appObjects['articles'][articleID].category = category
-                        floGlobals.appObjects['articles'][articleID].contributors = contributors
-                        floGlobals.appObjects['articles'][articleID].title = title
-                        floGlobals.appObjects['articles'][articleID].tags = tags
-                        floGlobals.appObjects['articles'][articleID].readTime = readTime
-                        Promise.all([
-                            floCloudAPI.updateObjectData('articles'),
-                            floCloudAPI.updateObjectData('publishedVc'),
-                            floCloudAPI.updateObjectData('articlesContent'),
-                        ]).then(() => {
-                            notify(`${isPublished ? 'Updated' : 'Published'} article`, 'success')
-                            button.closest('.request-card').remove()
-                        })
-                    }
-                })
-            } else if (e.target.closest('.preview-button')) {
-                const button = e.target.closest('.preview-button');
-                const vc = button.closest('.request-card').dataset.vc;
-                const { message: { content, title } } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc];
-
-                getRef('preview_container').innerHTML = DOMPurify.sanitize(content)
-                getRef('preview_container').prepend(createElement('h1', {
-                    textContent: title
-                }))
-                showPopup('preview_popup')
-            }
         }
 
         let isSearchOn = false
@@ -1095,7 +1145,6 @@
             }
         })
         function animateLikeCount(voteCount = 1, articleID) {
-            console.log('called')
             const animOptions = {
                 fill: 'forwards',
                 duration: 150,
@@ -1130,6 +1179,187 @@
                 showPopup('sign_in_popup')
             }
         }, 300))
+
+        async function renderDashboard() {
+            const requests = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`]
+            const frag = document.createDocumentFragment()
+            for (const key in requests) {
+                const card = render.requestCard(requests[key])
+                if (card)
+                    frag.prepend(card)
+            }
+            floCloudAPI.updateObjectData('publishedVc')
+            getRef('publishing_requests').innerHTML = ''
+            getRef('publishing_requests').append(frag)
+
+            for (const articleKey in floGlobals.appObjects.articles) {
+                const card = render.articleRow(articleKey)
+                frag.prepend(card)
+            }
+            getRef('article_analytics').innerHTML = ''
+            getRef('article_analytics').append(frag)
+        }
+
+        function publishArticle(vc) {
+            const { message: { articleID, content, contributors, title, readTime }, vectorClock } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc];
+            const isPublished = floGlobals.appObjects['articles'].hasOwnProperty(articleID)
+            getConfirmation(`${isPublished ? 'Update' : 'Publish'} article?`).then(res => {
+                if (res) {
+                    const { title, category, summary, published, tags } = getArticleMeta()
+                    floGlobals.appObjects['publishedVc'][vectorClock] = true
+                    floGlobals.appObjects.articlesContent[articleID] = content
+                    if (isPublished) {
+                        floGlobals.appObjects['articles'][articleID]['updated'] = Date.now();
+                    } else {
+                        floGlobals.appObjects.articles[articleID] = {
+                            published: Date.now(),
+                            votes: 0,
+                            lastCountedVC: ''
+                        }
+                        floGlobals.appObjects.articleVotes[articleID] = { votes: {} }
+                    }
+                    floGlobals.appObjects['articles'][articleID].category = category
+                    floGlobals.appObjects['articles'][articleID].contributors = contributors
+                    floGlobals.appObjects['articles'][articleID].title = title
+                    floGlobals.appObjects['articles'][articleID].tags = tags
+                    floGlobals.appObjects['articles'][articleID].readTime = readTime
+                    floGlobals.appObjects['articles'][articleID].summary = summary
+                    Promise.all([
+                        floCloudAPI.updateObjectData('articles'),
+                        floCloudAPI.updateObjectData('publishedVc'),
+                        floCloudAPI.updateObjectData('articlesContent'),
+                        floCloudAPI.updateObjectData('articleVotes'),
+                    ]).then(() => {
+                        notify(`${isPublished ? 'Updated' : 'Published'} article`, 'success')
+                        button.closest('.request-card').remove()
+                    })
+                }
+            })
+        }
+
+        function handleRequestClick(e) {
+            if (e.target.closest('.publish-button')) {
+                const button = e.target.closest('.publish-button');
+                const vc = button.closest('.request-card').dataset.vc;
+                const { message: { articleID, title } } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc]
+                const isPublished = floGlobals.appObjects['articles'].hasOwnProperty(articleID)
+                setArticleMeta({ title })
+                showPopup('edit_popup')
+            } else if (e.target.closest('.preview-button')) {
+                const button = e.target.closest('.preview-button');
+                const vc = button.closest('.request-card').dataset.vc;
+                const { message: { content, title } } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc];
+
+                getRef('preview_container').innerHTML = DOMPurify.sanitize(content)
+                getRef('preview_container').prepend(createElement('h1', {
+                    textContent: title
+                }))
+                showPopup('preview_popup')
+            }
+        }
+
+        function setArticleMeta(details) {
+            const { category, title, tags, summary, published } = details
+            getRef('edit_title').value = title;
+            getRef('edit_summary').value = summary || '';
+            getRef('edit_category').value = category || '';
+            getRef('edit_tags').value = tags || [];
+            const now = Date.now()
+            getRef('edit_published').value = new Date(published || now).toISOString().substr(0, new Date(published || now).toISOString().indexOf("."))
+        }
+        function getArticleMeta() {
+            return {
+                title: getRef('edit_title').value.trim(),
+                category: getRef('edit_category').value,
+                summary: getRef('edit_summary').value.trim(),
+                published: getRef('edit_published').value,
+                tags: getRef('edit_tags').value,
+            }
+        }
+        function handleAnalyticsClick(e) {
+            if (e.target.closest('.edit-article')) {
+                const button = e.target.closest('.edit-article');
+                const articleID = button.dataset.articleId;
+                setArticleMeta(floGlobals.appObjects.articles[articleID])
+                showPopup('edit_popup')
+            }
+        }
+
+        function updateArticle() {
+            getConfirmation('Update article meta data?').then(res => {
+                if (res) {
+                    const { title, category, summary, published, tags } = getArticleMeta()
+                    floGlobals.appObjects['articles'][articleID].category = category
+                    floGlobals.appObjects['articles'][articleID].title = title
+                    floGlobals.appObjects['articles'][articleID].tags = tags
+                    floGlobals.appObjects['articles'][articleID].summary = summary
+                    Promise.all([
+                        floCloudAPI.updateObjectData('articles'),
+                        floCloudAPI.updateObjectData('publishedVc'),
+                    ]).then(() => {
+                        notify(`Updated article meta data`, 'success')
+                    })
+                }
+            })
+        }
+
+        async function calculateVotes() {
+            await floCloudAPI.requestObjectData('articleVotes')
+            const articlesVotesProm = []
+            const articleIDs = []
+            for (const articleKey in floGlobals.appObjects.articles) {
+                if (floGlobals.appObjects.articleVotes.hasOwnProperty(articleKey) && floGlobals.appObjects.articles[articleKey].lastCountedVC !== '') {
+                    articlesVotesProm.push(
+                        floCloudAPI.requestGeneralData(`article_${articleKey}_votes`, {
+                            lowerVectorClock: floGlobals.appObjects.articles[articleKey].lastCountedVC + 1
+                        })
+                    )
+                } else {
+                    articlesVotesProm.push(
+                        floCloudAPI.requestGeneralData(`article_${articleKey}_votes`)
+                    )
+                }
+                articleIDs.push(articleKey)
+            }
+            Promise.all(articlesVotesProm).then(res => {
+                res.forEach((articleVotes, index) => {
+                    if (!floGlobals.appObjects.articleVotes.hasOwnProperty(articleIDs[index])) {
+                        floGlobals.appObjects.articleVotes[articleIDs[index]].votes = {}
+                    }
+                    if (floGlobals.appObjects.articles[articleIDs[index]].lastCountedVC === '') {
+                        articleVotes = floGlobals.generalData[`article_${articleIDs[index]}_votes|${floGlobals.adminID}|${floGlobals.application}`]
+                    }
+                    for (const voteKey in articleVotes) {
+                        const { senderID, message: { voteCount }, type, vectorClock, time } = articleVotes[voteKey]
+                        const { votes } = floGlobals.appObjects.articleVotes[articleIDs[index]];
+                        if (votes[senderID]) {
+                            floGlobals.appObjects.articleVotes[articleIDs[index]].votes[senderID] += voteCount || 1
+                        } else {
+                            floGlobals.appObjects.articleVotes[articleIDs[index]].votes[senderID] = voteCount || 1
+                        }
+                        floGlobals.appObjects.articles[articleIDs[index]].lastCountedVC = vectorClock
+                    }
+                    let totalArticleVotes = 0
+                    for (const voter in floGlobals.appObjects.articleVotes[articleIDs[index]].votes) {
+                        totalArticleVotes += floGlobals.appObjects.articleVotes[articleIDs[index]].votes[voter]
+                    }
+                    floGlobals.appObjects.articles[articleIDs[index]].votes = totalArticleVotes
+                })
+                Promise.all([
+                    floCloudAPI.updateObjectData('articles'),
+                    floCloudAPI.updateObjectData('articleVotes')
+                ])
+                    .then(() => {
+                        console.log('calculated votes')
+                    })
+            })
+            floGlobals.appObjects.articlesContent = await compactIDB.readData('appObjects', 'articlesContent')
+        }
+
+        getRef('section_selector').addEventListener('change', e => {
+            document.querySelectorAll('.admin-section').forEach(section => section.classList.add('hide-completely'))
+            getRef(`${e.target.value}_section`).classList.remove('hide-completely')
+        })
 
 
         function getSignedIn() {
@@ -1167,68 +1397,12 @@
                 floGlobals.isSubAdmin = floGlobals.subAdmins.includes(myFloID)
                 if (floGlobals.isSubAdmin) {
                     getRef('publishing_requests').addEventListener('click', handleRequestClick);
+                    getRef('article_analytics').addEventListener('click', handleAnalyticsClick);
                     document.querySelectorAll('.admin-option').forEach(elem => elem.classList.remove('hide-completely'));
-                    await floCloudAPI.requestObjectData('articleVotes')
-                    const articlesVotesProm = []
-                    const articleIDs = []
-                    for (const articleKey in floGlobals.appObjects.articles) {
-                        if (floGlobals.appObjects.articleVotes[articleKey] & floGlobals.appObjects.articleVotes[articleKey].lastCountedVC !== '') {
-                            articlesVotesProm.push(
-                                floCloudAPI.requestGeneralData(`article_${articleKey}_votes`),
-                                {
-                                    lowerVectorClock: floGlobals.appObjects.articleVotes[articleKey].lastCountedVC
-                                }
-                            )
-                        } else {
-                            articlesVotesProm.push(
-                                floCloudAPI.requestGeneralData(`article_${articleKey}_votes`)
-                            )
-                        }
-                        articleIDs.push(articleKey)
-                    }
-                    Promise.all(articlesVotesProm).then(res => {
-                        res.forEach((articleVotes, index) => {
-                            if (!floGlobals.appObjects.articleVotes.hasOwnProperty(articleIDs[index])) {
-                                floGlobals.appObjects.articleVotes[articleIDs[index]].votes = {}
-                                floGlobals.appObjects.articles[articleIDs[index]].lastCountedVC = ''
-                            }
-                            let isFirst
-                            if (floGlobals.appObjects.articles[articleIDs[index]].lastCountedVC === '') {
-                                articleVotes = floGlobals.generalData[`article_${articleIDs[index]}_votes|${floGlobals.adminID}|${floGlobals.application}`]
-                            } else {
-                                isFirst = true
-                            }
-                            for (const voteKey in articleVotes) {
-                                const { senderID, message: { voteCount }, type, vectorClock } = articleVotes[voteKey]
-                                if (isFirst && floGlobals.appObjects.articles[articleIDs[index]].lastCountedVC === vectorClock) { // Skip over already counted VC
-                                    isFirst = false
-                                    continue
-                                }
-                                const { votes, lastCountedVC } = floGlobals.appObjects.articleVotes[articleIDs[index]];
-                                if (votes[senderID]) {
-                                    floGlobals.appObjects.articleVotes[articleIDs[index]].votes[senderID] += voteCount || 1
-                                } else {
-                                    floGlobals.appObjects.articleVotes[articleIDs[index]].votes[senderID] = voteCount || 1
-                                }
-                                floGlobals.appObjects.articles[articleIDs[index]].lastCountedVC = vectorClock
-                            }
-                            let totalArticleVotes = 0
-                            for (const voter in floGlobals.appObjects.articleVotes[articleIDs[index]].votes) {
-                                totalArticleVotes += floGlobals.appObjects.articleVotes[articleIDs[index]].votes[voter]
-                            }
-                            floGlobals.appObjects.articles[articleIDs[index]].votes = totalArticleVotes
-                        })
-                        Promise.all([
-                            floCloudAPI.updateObjectData('articles'),
-                            floCloudAPI.updateObjectData('articleVotes')
-                        ])
-                            .then(() => {
-                                console.log('calculated votes')
-                            })
-                    })
-                    floGlobals.appObjects.articlesContent = await compactIDB.readData('appObjects', 'articlesContent')
+                    calculateVotes()
                 } else {
                     getRef('publishing_requests').removeEventListener('click', handleRequestClick)
+                    getRef('article_analytics').removeEventListener('click', handleAnalyticsClick);
                     document.querySelectorAll('.admin-option').forEach(elem => elem.classList.add('hide-completely'))
                 }
                 if (location.hash.includes('sign_in') || location.hash.includes('sign_up'))
