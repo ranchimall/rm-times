@@ -2187,7 +2187,6 @@ smSelect.innerHTML = `
     --accent-color: #4d2588;
     --text-color: 17, 17, 17;
     --background-color: 255, 255, 255;
-    --max-height: auto;
     --min-width: 100%;
 }
 :host([disabled]) .select{
@@ -2261,7 +2260,7 @@ smSelect.innerHTML = `
         -ms-flex-direction: column;
             flex-direction: column;
     min-width: var(--min-width);
-    max-height: var(--max-height);
+    max-height: var(--max-height, auto);
     background: rgba(var(--background-color), 1);
     border: solid 1px rgba(var(--text-color), 0.2);
     border-radius: var(--border-radius, 0.5rem);
@@ -3640,11 +3639,11 @@ customElements.define('tags-input', class extends HTMLElement {
         return ['placeholder', 'limit']
     }
     get value() {
-        return [...this.tags].join()
+        return [...this.tags].filter(v => v !== undefined)
     }
     set value(arr) {
         this.reset();
-        [...new Set(arr)].forEach(tag => this.addTag(tag))
+        [...new Set(arr.filter(v => v !== undefined))].forEach(tag => this.addTag(tag))
     }
     get isValid() {
         return this.tags.size

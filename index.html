@@ -319,14 +319,14 @@
                     </svg>
                 </button>
             </div>
-            <h4>
+            <h4 id="edit_popup__title">
                 Edit
             </h4>
         </header>
         <section class="grid gap-1-5">
             <div class="grid gap-0-5">
                 <h5>Title</h5>
-                <sm-input id="edit_title"></sm-input>
+                <sm-input id="edit_title" required></sm-input>
             </div>
             <div class="grid gap-0-5">
                 <h5>Summary</h5>
@@ -352,7 +352,7 @@
                 <h5>Publishing date</h5>
                 <input type="datetime-local" id="edit_published">
             </label>
-            <sm-button id="set_article_meta" variant="primary">Save</sm-button>
+            <sm-button id="set_article_meta" onclick="defineArticle()" variant="primary">Save</sm-button>
         </section>
     </sm-popup>
     <sm-popup id="user_popup">
@@ -856,12 +856,7 @@
             },
             requestCard(details) {
                 const { message: { articleID, category, title }, time, vectorClock } = details
-                if (floGlobals.appObjects.publishedVc[vectorClock]) {
-                    // const requestTime = parseInt(vectorClock.split('_')[0])
-                    // if ((Date.now() - requestTime) / 1000 > 604800) {
-                    //     delete floGlobals.appObjects.publishedVc[vectorClock]
-                    // }
-                } else {
+                if (!floGlobals.appObjects.publishedVc.hasOwnProperty(vectorClock)) {
                     const clone = getRef('request_template').content.cloneNode(true).firstElementChild
                     clone.dataset.vc = vectorClock
                     clone.querySelector('.request-card__title').textContent = title
@@ -1075,7 +1070,7 @@
                     if (searchResult.length > 5) {
                         getRef('search_suggestions').append(createElement('a', {
                             textContent: 'See all results',
-                            attributes: { href: `#/explore?type=search&query=${searchKey}}` },
+                            attributes: { href: `#/explore?type=search&query=${searchKey}` },
                             className: 'search-suggestion interact'
                         }))
                     }
@@ -1205,7 +1200,7 @@
             const isPublished = floGlobals.appObjects['articles'].hasOwnProperty(articleID)
             getConfirmation(`${isPublished ? 'Update' : 'Publish'} article?`).then(res => {
                 if (res) {
-                    const { title, category, summary, published, tags } = getArticleMeta()
+                    const { title, category, summary, published, tags } = getArticleMetaData()
                     floGlobals.appObjects['publishedVc'][vectorClock] = true
                     floGlobals.appObjects.articlesContent[articleID] = content
                     if (isPublished) {
@@ -1231,7 +1226,8 @@
                         floCloudAPI.updateObjectData('articleVotes'),
                     ]).then(() => {
                         notify(`${isPublished ? 'Updated' : 'Published'} article`, 'success')
-                        button.closest('.request-card').remove()
+                        document.querySelector(`.request-card[data-vc="${vc}"]`).remove()
+                        hidePopup()
                     })
                 }
             })
@@ -1243,7 +1239,17 @@
                 const vc = button.closest('.request-card').dataset.vc;
                 const { message: { articleID, title } } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc]
                 const isPublished = floGlobals.appObjects['articles'].hasOwnProperty(articleID)
-                setArticleMeta({ title })
+                if (isPublished)
+                    setArticleMetaData(floGlobals.appObjects.articles[articleID])
+                else
+                    setArticleMetaData({ title })
+                floGlobals.subAdminData = {
+                    actionType: 'request',
+                    articleID,
+                    vc
+                }
+                getRef('set_article_meta').textContent = isPublished ? 'UPDATE' : 'PUBLISH'
+                getRef('edit_popup__title').textContent = isPublished ? 'Update' : 'Publish'
                 showPopup('edit_popup')
             } else if (e.target.closest('.preview-button')) {
                 const button = e.target.closest('.preview-button');
@@ -1258,7 +1264,7 @@
             }
         }
 
-        function setArticleMeta(details) {
+        function setArticleMetaData(details) {
             const { category, title, tags, summary, published } = details
             getRef('edit_title').value = title;
             getRef('edit_summary').value = summary || '';
@@ -1267,12 +1273,12 @@
             const now = Date.now()
             getRef('edit_published').value = new Date(published || now).toISOString().substr(0, new Date(published || now).toISOString().indexOf("."))
         }
-        function getArticleMeta() {
+        function getArticleMetaData() {
             return {
                 title: getRef('edit_title').value.trim(),
                 category: getRef('edit_category').value,
                 summary: getRef('edit_summary').value.trim(),
-                published: getRef('edit_published').value,
+                published: new Date(getRef('edit_published').value).getTime(),
                 tags: getRef('edit_tags').value,
             }
         }
@@ -1280,15 +1286,21 @@
             if (e.target.closest('.edit-article')) {
                 const button = e.target.closest('.edit-article');
                 const articleID = button.dataset.articleId;
-                setArticleMeta(floGlobals.appObjects.articles[articleID])
+                setArticleMetaData(floGlobals.appObjects.articles[articleID])
+                floGlobals.subAdminData = {
+                    actionType: 'analytics',
+                    articleID,
+                }
+                getRef('set_article_meta').textContent = "UPDATE"
+                getRef('edit_popup__title').textContent = "Update"
                 showPopup('edit_popup')
             }
         }
 
-        function updateArticle() {
+        function updateArticleMetaData(articleID) {
             getConfirmation('Update article meta data?').then(res => {
                 if (res) {
-                    const { title, category, summary, published, tags } = getArticleMeta()
+                    const { title, category, summary, published, tags } = getArticleMetaData()
                     floGlobals.appObjects['articles'][articleID].category = category
                     floGlobals.appObjects['articles'][articleID].title = title
                     floGlobals.appObjects['articles'][articleID].tags = tags
@@ -1298,9 +1310,18 @@
                         floCloudAPI.updateObjectData('publishedVc'),
                     ]).then(() => {
                         notify(`Updated article meta data`, 'success')
+                        hidePopup()
                     })
                 }
             })
+        }
+
+        function defineArticle() {
+            if (floGlobals.subAdminData.actionType === 'analytics') {
+                updateArticleMetaData(floGlobals.subAdminData.articleID)
+            } else {
+                publishArticle(floGlobals.subAdminData.vc)
+            }
         }
 
         async function calculateVotes() {
@@ -1396,6 +1417,7 @@
                 getRef('user_flo_id').value = myFloID
                 floGlobals.isSubAdmin = floGlobals.subAdmins.includes(myFloID)
                 if (floGlobals.isSubAdmin) {
+                    floGlobals.subAdminData = {}
                     getRef('publishing_requests').addEventListener('click', handleRequestClick);
                     getRef('article_analytics').addEventListener('click', handleAnalyticsClick);
                     document.querySelectorAll('.admin-option').forEach(elem => elem.classList.remove('hide-completely'));

@@ -437,6 +437,9 @@ sm-option,
 strip-option {
   font-size: 0.9rem;
 }
+sm-select {
+  --max-height: 12rem;
+}
 strip-select {
   --gap: 0;
 }
