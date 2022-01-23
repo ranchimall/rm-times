@@ -166,7 +166,7 @@ ul {
   list-style: none;
 }
 
-.hide-completely {
+.hide {
   display: none !important;
 }
 
@@ -810,6 +810,18 @@ theme-toggle {
   margin-left: 0.4rem;
 }
 
+#go_to_top {
+  position: fixed;
+  z-index: 2;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
+  border-radius: 2rem;
+  bottom: 0;
+  right: 0;
+  margin: 1.5rem;
+  padding: 0.8rem;
+  background-color: var(--foreground-color);
+}
+
 footer {
   padding: 3rem 1.5rem;
   justify-items: center;
@@ -864,7 +876,6 @@ footer {
 #preview_popup h1,
 #article h1 {
   font-size: 1.4rem;
-  margin-bottom: 1rem;
 }
 #preview_popup h3:not(:first-of-type),
 #article h3:not(:first-of-type) {
