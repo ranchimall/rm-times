@@ -259,7 +259,7 @@
                 </svg>
             </button>
         </header>
-        <section id="sign_in" class="">
+        <section id="sign_in" class="grid gap-1">
             <div class="grid gap-0-5">
                 <h3>Sign in</h3>
                 <p>Liking an article supports and encourages the creators.</p>
@@ -594,6 +594,12 @@
             switch (e.target.id) {
                 case 'preview_popup':
                     getRef('preview_container').innerHTML = ''
+                    break;
+                case 'sign_in_popup':
+                    getRef('sign_in').style = ''
+                    getRef('sign_in').classList.remove('hide')
+                    getRef('sign_up').style = ''
+                    getRef('sign_up').classList.add('hide')
                     break;
             }
         })
