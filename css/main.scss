@@ -37,8 +37,7 @@ body[data-theme="dark"] {
   &,
   * {
     --accent-color: #86afff;
-    --text-color: 230, 230, 230;
-    --text-color-light: 170, 170, 170;
+    --text-color: 220, 220, 220;
     --background-color: 10, 10, 10;
     --foreground-color: rgb(24, 24, 24);
     --danger-color: rgb(255, 106, 106);
@@ -75,6 +74,7 @@ a:not([class]) {
 }
 
 input[type="datetime-local"] {
+  width: 100%;
   padding: 0.6rem 0.8rem;
   background-color: rgba(var(--text-color), 0.06);
   border: none;
@@ -558,7 +558,6 @@ main {
   gap: 0.5rem;
   align-items: center;
   width: calc(100% - 2rem);
-  margin: 0 1rem;
   z-index: 1;
   background-color: rgba(var(--background-color), 1);
   .icon-only {
@@ -846,12 +845,6 @@ footer {
     display: none;
   }
 }
-@supports (-webkit-text-stroke: 1px black) {
-  #landing h1 {
-    -webkit-text-stroke: 1px rgba(var(--text-color), 1);
-    -webkit-text-fill-color: rgba(var(--background-color), 1);
-  }
-}
 @media screen and (min-width: 40rem) {
   sm-popup {
     --width: 24rem;
@@ -908,7 +901,7 @@ footer {
   #preview_popup,
   #article {
     h1 {
-      font-size: 2rem;
+      font-size: 2.5rem;
     }
   }
   #article {
@@ -917,6 +910,18 @@ footer {
 
   #preview_popup {
     --width: 60ch;
+  }
+  #edit_article_meta_popup {
+    --width: 48rem;
+    & > section {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr 1.5fr;
+      align-items: flex-start;
+    }
+  }
+  #user_popup {
+    --width: 28rem;
   }
 }
 @media (any-hover: hover) {

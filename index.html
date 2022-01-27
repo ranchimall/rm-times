@@ -345,7 +345,7 @@
         </header>
         <section id="preview_container"></section>
     </sm-popup>
-    <sm-popup id="edit_popup">
+    <sm-popup id="edit_article_meta_popup">
         <header slot="header" class="popup__header">
             <div class="flex align-center">
                 <button class="popup__header__close" onclick="hidePopup()">
@@ -361,36 +361,44 @@
                 Edit
             </h4>
         </header>
-        <section class="grid gap-1-5">
-            <div class="grid gap-0-5">
-                <h5>Title</h5>
-                <sm-input id="edit_title" required></sm-input>
+        <section>
+            <div class="grid gap-1-5">
+                <div class="grid gap-0-5">
+                    <h5>Title</h5>
+                    <sm-input id="edit_title" required></sm-input>
+                </div>
+                <div class="grid gap-0-5">
+                    <h5>Select category</h5>
+                    <sm-select id="edit_category">
+                        <sm-option value="art">Art</sm-option>
+                        <sm-option value="culture">Culture</sm-option>
+                        <sm-option value="entertainment">Entertainment</sm-option>
+                        <sm-option value="politics">Politics</sm-option>
+                        <sm-option value="science">Science</sm-option>
+                        <sm-option value="sports">Sports</sm-option>
+                        <sm-option value="tech">Tech</sm-option>
+                    </sm-select>
+                </div>
+                <div class="grid gap-0-5">
+                    <h5>Summary</h5>
+                    <sm-textarea id="edit_summary" rows="4"></sm-textarea>
+                </div>
             </div>
-            <div class="grid gap-0-5">
-                <h5>Summary</h5>
-                <sm-textarea id="edit_summary" rows="4"></sm-textarea>
+            <div class="grid gap-1-5">
+                <div class="grid gap-0-5">
+                    <h5>Add tags</h5>
+                    <tags-input id="edit_tags" limit="10"></tags-input>
+                </div>
+                <div class="grid gap-0-5">
+                    <h5>contributors</h5>
+                    <tags-input id="edit_contributors"></tags-input>
+                </div>
+                <label class="grid gap-0-5">
+                    <h5>Publishing date</h5>
+                    <input type="datetime-local" id="edit_published">
+                </label>
+                <sm-button id="set_article_meta" onclick="defineArticle()" variant="primary">Save</sm-button>
             </div>
-            <div class="grid gap-0-5">
-                <h5>Select category</h5>
-                <sm-select id="edit_category">
-                    <sm-option value="art">Art</sm-option>
-                    <sm-option value="culture">Culture</sm-option>
-                    <sm-option value="entertainment">Entertainment</sm-option>
-                    <sm-option value="politics">Politics</sm-option>
-                    <sm-option value="science">Science</sm-option>
-                    <sm-option value="sports">Sports</sm-option>
-                    <sm-option value="tech">Tech</sm-option>
-                </sm-select>
-            </div>
-            <div class="grid gap-0-5">
-                <h5>Add tags</h5>
-                <tags-input id="edit_tags" limit="10"></tags-input>
-            </div>
-            <label class="grid gap-0-5">
-                <h5>Publishing date</h5>
-                <input type="datetime-local" id="edit_published">
-            </label>
-            <sm-button id="set_article_meta" onclick="defineArticle()" variant="primary">Save</sm-button>
         </section>
     </sm-popup>
     <sm-popup id="user_popup">
@@ -802,6 +810,7 @@
             }
             document.querySelectorAll('.page').forEach(page => page.classList.add('hide'))
             getRef(targetPage).classList.remove('hide')
+            animateTo(getRef(targetPage), [{ opacity: 0 }, { opacity: 1 }], { duration: 300, fill: 'forwards', easing: 'ease' })
             if (pagesData.lastPage !== pageId) {
                 pagesData.lastPage = pageId
                 if (!pagesData.openedPages.includes(pageId)) {
@@ -982,7 +991,7 @@
             getRef('trending_article_container').innerHTML = ''
             getRef('trending_article_container').append(frag)
             // render latest articles
-            const sortedArticles = sortedByVotes.slice(3, 6).sort((a, b) => b.published - a.published)
+            const sortedArticles = sortedByVotes.slice(3).sort((a, b) => b.published - a.published)
             sortedArticles.forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
             getRef('latest_articles_list').innerHTML = ''
             getRef('latest_articles_list').append(frag)
@@ -1118,7 +1127,6 @@
                     const frag = document.createDocumentFragment()
                     searchResult.slice(0, 4).forEach((result) => {
                         const { uid, title } = result
-                        console.log(result)
                         frag.append(createElement('a', {
                             textContent: title,
                             attributes: { href: `#/article?articleID=${uid}` },
@@ -1151,6 +1159,14 @@
                 toggleSearch()
             }
         })
+        getRef('search_suggestions').addEventListener('click', e => {
+            if (e.target.value.trim() !== '' && e.code === 'Enter') {
+                location.hash = `#/explore?type=search&query=${e.target.value.trim()}`
+                e.target.value = ''
+                toggleSearch()
+            }
+        })
+
         const slideInLeft = [
             {
                 opacity: 0,
@@ -1390,7 +1406,7 @@
             const isPublished = floGlobals.appObjects['articles'].hasOwnProperty(articleID)
             getConfirmation(`${isPublished ? 'Update' : 'Publish'} article?`).then(res => {
                 if (res) {
-                    const { title, category, summary, published, tags } = getArticleMetaData()
+                    const { title, category, summary, published, tags, contributors } = getArticleMetaData()
                     floGlobals.appObjects['publishedVc'][vectorClock] = true
                     floGlobals.appObjects.articlesContent[articleID] = content
                     if (isPublished) {
@@ -1427,12 +1443,12 @@
             if (e.target.closest('.publish-button')) {
                 const button = e.target.closest('.publish-button');
                 const vc = button.closest('.request-card').dataset.vc;
-                const { message: { articleID, title } } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc]
+                const { message: { articleID, title, contributors } } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc]
                 const isPublished = floGlobals.appObjects['articles'].hasOwnProperty(articleID)
                 if (isPublished)
                     setArticleMetaData(floGlobals.appObjects.articles[articleID])
                 else
-                    setArticleMetaData({ title })
+                    setArticleMetaData({ title, contributors })
                 floGlobals.subAdminData = {
                     actionType: 'request',
                     articleID,
@@ -1440,7 +1456,7 @@
                 }
                 getRef('set_article_meta').textContent = isPublished ? 'UPDATE' : 'PUBLISH'
                 getRef('edit_popup__title').textContent = isPublished ? 'Update' : 'Publish'
-                showPopup('edit_popup')
+                showPopup('edit_article_meta_popup')
             } else if (e.target.closest('.preview-button')) {
                 const button = e.target.closest('.preview-button');
                 const vc = button.closest('.request-card').dataset.vc;
@@ -1455,10 +1471,11 @@
         }
 
         function setArticleMetaData(details) {
-            const { category, title, tags, summary, published } = details
+            const { category, title, tags, summary, published, contributors } = details
             getRef('edit_title').value = title;
             getRef('edit_summary').value = summary || '';
             getRef('edit_category').value = category || '';
+            getRef('edit_contributors').value = contributors || [];
             getRef('edit_tags').value = tags || [];
             const now = Date.now()
             getRef('edit_published').value = new Date(published || now).toISOString().substr(0, new Date(published || now).toISOString().indexOf("."))
@@ -1469,6 +1486,7 @@
                 category: getRef('edit_category').value,
                 summary: getRef('edit_summary').value.trim(),
                 published: new Date(getRef('edit_published').value).getTime(),
+                contributors: getRef('edit_contributors').value,
                 tags: getRef('edit_tags').value,
             }
         }
@@ -1483,18 +1501,19 @@
                 }
                 getRef('set_article_meta').textContent = "UPDATE"
                 getRef('edit_popup__title').textContent = "Update"
-                showPopup('edit_popup')
+                showPopup('edit_article_meta_popup')
             }
         }
 
         function updateArticleMetaData(articleID) {
             getConfirmation('Update article meta data?').then(res => {
                 if (res) {
-                    const { title, category, summary, published, tags } = getArticleMetaData()
+                    const { title, category, summary, published, tags, contributors } = getArticleMetaData()
                     floGlobals.appObjects['articles'][articleID].category = category
                     floGlobals.appObjects['articles'][articleID].title = title
                     floGlobals.appObjects['articles'][articleID].tags = tags
                     floGlobals.appObjects['articles'][articleID].summary = summary
+                    floGlobals.appObjects['articles'][articleID].contributors = contributors
                     Promise.all([
                         floCloudAPI.updateObjectData('articles'),
                         floCloudAPI.updateObjectData('publishedVc'),
