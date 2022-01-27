@@ -236,6 +236,7 @@
                 <strip-select id="section_selector">
                     <strip-option value="analytic" selected>Analytics</strip-option>
                     <strip-option value="request">Requests</strip-option>
+                    <strip-option value="Writers">Requests</strip-option>
                 </strip-select>
             </div>
             <section id="analytic_section" class="admin-section">
@@ -245,6 +246,10 @@
             <section id="request_section" class="admin-section hide">
                 <ul id="publishing_requests" class="grid gap-1-5 observe-empty-state"></ul>
                 <p class="empty-state">No requests</p>
+            </section>
+            <section id="writers_section" class="admin-section hide">
+                <ul id="writers_list" class="grid gap-1-5 observe-empty-state"></ul>
+                <p class="empty-state">No writers</p>
             </section>
         </article>
     </main>
@@ -1160,9 +1165,8 @@
             }
         })
         getRef('search_suggestions').addEventListener('click', e => {
-            if (e.target.value.trim() !== '' && e.code === 'Enter') {
-                location.hash = `#/explore?type=search&query=${e.target.value.trim()}`
-                e.target.value = ''
+            if (e.target.closest('.search-suggestion')) {
+                getRef('search_articles').value = ''
                 toggleSearch()
             }
         })
