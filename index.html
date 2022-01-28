@@ -45,7 +45,7 @@
     </script>
 </head>
 
-<body onload="onLoadStartUp()">
+<body onload="onLoadStartUp()" class="hide">
     <sm-notifications id="notification_drawer"></sm-notifications>
     <audio id="notification_sound">
         <source src="https://rmservices.duckdns.org/files/notification-sound.mp3" type="audio/mpeg">
@@ -211,7 +211,7 @@
                 <div id="article_contributors" class="flex"></div>
                 <span>created with RanchiMall Content collaboration app</span>
             </section>
-            <button id="go_to_top" class="hide" onclick="goToTop()">
+            <button id="go_to_top" class="floating-button hide" onclick="goToTop()">
                 <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
                     fill="#000000">
                     <path d="M0 0h24v24H0V0z" fill="none" />
@@ -236,10 +236,10 @@
                 <strip-select id="section_selector">
                     <strip-option value="analytic" selected>Analytics</strip-option>
                     <strip-option value="request">Requests</strip-option>
-                    <strip-option value="Writers">Requests</strip-option>
+                    <strip-option value="writers">Writers</strip-option>
                 </strip-select>
             </div>
-            <section id="analytic_section" class="admin-section">
+            <section id="analytic_section" class="admin-section hide">
                 <ul id="article_analytics" class="grid gap-1-5 observe-empty-state"></ul>
                 <p class="empty-state">No articles</p>
             </section>
@@ -247,7 +247,15 @@
                 <ul id="publishing_requests" class="grid gap-1-5 observe-empty-state"></ul>
                 <p class="empty-state">No requests</p>
             </section>
-            <section id="writers_section" class="admin-section hide">
+            <section id="writers_section" class="admin-section">
+                <button id="add_writer_button" class="floating-button" onclick="showAddWriterPopup()">
+                    <svg class="icon button__icon--left" xmlns="http://www.w3.org/2000/svg" height="24px"
+                        viewBox="0 0 24 24" width="24px" fill="#000000">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                    </svg>
+                    Add writer
+                </button>
                 <ul id="writers_list" class="grid gap-1-5 observe-empty-state"></ul>
                 <p class="empty-state">No writers</p>
             </section>
@@ -406,6 +414,37 @@
             </div>
         </section>
     </sm-popup>
+
+    <sm-popup id="add_writer_popup">
+        <header slot="header" class="popup__header">
+            <div class="flex align-center">
+                <button class="popup__header__close" onclick="hidePopup()">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                        fill="#000000">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path
+                            d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    </svg>
+                </button>
+                <h3 id="writer_popup_title">Add writer</h3>
+            </div>
+        </header>
+        <sm-form>
+            <div class="grid">
+                <h5 class="label">FLO ID</h5>
+                <sm-input id="get_writer_id" error-text="Incorrect FLO ID" data-flo-id required></sm-input>
+            </div>
+            <div class="grid">
+                <h5 class="label">Name</h5>
+                <sm-input id="get_writer_name" required></sm-input>
+            </div>
+            <div class="grid">
+                <h5 class="label">Bio</h5>
+                <sm-textarea id="get_writer_bio" rows="2"></sm-textarea>
+            </div>
+            <sm-button id="save_writer" variant="primary" onclick="saveWriter()">Add writer</sm-button>
+        </sm-form>
+    </sm-popup>
     <sm-popup id="user_popup">
         <header slot="header" class="popup__header">
             <div class="flex align-center">
@@ -492,6 +531,37 @@
                 </button>
                 <button class="button button--primary publish-button">Publish</button>
             </div>
+        </li>
+    </template>
+
+    <template id="article_writer_template">
+        <li class="writer-card">
+            <div class="flex align-start space-between">
+                <div class="writer-profile"></div>
+                <div class="flex gap-0-5">
+                    <button class="icon-only edit-writer" title="Edit details">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
+                            width="24px" fill="#000000">
+                            <path d="M0 0h24v24H0V0z" fill="none" />
+                            <path
+                                d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" />
+                        </svg>
+                    </button>
+                    <button class="icon-only delete-writer" title="Delete writer">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
+                            width="24px" fill="#000000">
+                            <path d="M0 0h24v24H0V0z" fill="none" />
+                            <path
+                                d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="grid">
+                <h4 class="writer-name capitalize"></h4>
+                <p class="writer-bio"></p>
+            </div>
+            <sm-copy class="writer-flo-id"></sm-copy>
         </li>
     </template>
 
@@ -699,6 +769,7 @@
         window.addEventListener('hashchange', e => showPage(window.location.hash))
         window.addEventListener("load", () => {
             document.body.classList.remove('hide')
+            document.querySelectorAll('sm-input[data-flo-id]').forEach(input => input.customValidation = floCrypto.validateAddr)
             document.querySelectorAll('sm-input[data-private-key]').forEach(input => input.customValidation = floCrypto.getPubKeyHex)
             document.addEventListener('keyup', (e) => {
                 if (e.code === 'Escape') {
@@ -753,7 +824,7 @@
             let params = {}
             let searchParams
             if (targetPage === '') {
-                pageId = 'main_page'
+                pageId = 'dashboard'
             } else {
                 if (targetPage.includes('/')) {
                     if (targetPage.includes('?')) {
@@ -771,10 +842,10 @@
                     pageId = targetPage
                 }
             }
-            if (pageId === 'dashboard' && !floGlobals.isSubAdmin) {
-                pageId = 'home'
-                history.replaceState(null, null, '#/home')
-            }
+            // if (pageId === 'dashboard' && !floGlobals.isSubAdmin) {
+            //     pageId = 'home'
+            //     history.replaceState(null, null, '#/home')
+            // }
             if (searchParams) {
                 const urlSearchParams = new URLSearchParams('?' + searchParams);
                 params = Object.fromEntries(urlSearchParams.entries());
@@ -956,12 +1027,23 @@
                 clone.querySelector('.edit-article').dataset.articleId = articleID
                 return clone
             },
+            writerCard(writerID) {
+                const { name, bio } = floGlobals.appObjects.articleWriters[writerID]
+                const clone = getRef('article_writer_template').content.cloneNode(true).firstElementChild
+                clone.dataset.writerId = writerID
+                clone.querySelector('.writer-profile').textContent = name[0]
+                clone.querySelector('.writer-name').textContent = name
+                clone.querySelector('.writer-bio').textContent = bio
+                clone.querySelector('.writer-flo-id').setAttribute('value', writerID)
+                return clone
+            },
         }
 
         const getArticles = async () => {
             await Promise.all([
                 floCloudAPI.requestObjectData('articles'),
-                floCloudAPI.requestObjectData('articlesContent')
+                floCloudAPI.requestObjectData('articlesContent'),
+                floCloudAPI.requestObjectData('articleWriters'),
             ])
             delete floGlobals.appObjects.articlesContent
             showPage(window.location.hash, { firstLoad: true })
@@ -1403,6 +1485,13 @@
             }
             getRef('article_analytics').innerHTML = ''
             getRef('article_analytics').append(frag)
+
+            for (const articleKey in floGlobals.appObjects.articleWriters) {
+                const card = render.writerCard(articleKey)
+                frag.prepend(card)
+            }
+            getRef('writers_list').innerHTML = ''
+            getRef('writers_list').append(frag)
         }
 
         function publishArticle(vc) {
@@ -1591,9 +1680,86 @@
         }
 
         getRef('section_selector').addEventListener('change', e => {
-            document.querySelectorAll('.admin-section').forEach(section => section.classList.add('hide'))
+            document.querySelectorAll('.admin-section').forEach(section => { section.classList.add('hide') })
             getRef(`${e.target.value}_section`).classList.remove('hide')
         })
+
+        function setWriterDetails(writerID) {
+            console.log(writerID)
+            const { name, bio } = floGlobals.appObjects.articleWriters[writerID]
+            getRef('get_writer_id').value = writerID
+            getRef('get_writer_name').value = name
+            getRef('get_writer_bio').value = bio
+        }
+        function getWriterDetails() {
+            return {
+                floID: getRef('get_writer_id').value.trim(),
+                name: getRef('get_writer_name').value.trim(),
+                bio: getRef('get_writer_bio').value.trim(),
+            }
+        }
+
+        function showAddWriterPopup() {
+            getRef('writer_popup_title').textContent = "Add writer"
+            getRef('save_writer').textContent = "ADD"
+            getRef('get_writer_id').removeAttribute('disabled')
+            getRef('get_writer_id').parentNode.classList.remove('hide')
+            showPopup('add_writer_popup')
+        }
+
+        function handleWritersClick(e) {
+            if (e.target.closest('.edit-writer')) {
+                const button = e.target.closest('.edit-writer');
+                const writerID = button.closest('.writer-card').dataset.writerId;
+                setWriterDetails(writerID)
+                getRef('writer_popup_title').textContent = "Edit"
+                getRef('save_writer').textContent = "UPDATE"
+                getRef('get_writer_id').setAttribute('disabled', 'true')
+                getRef('get_writer_id').parentNode.classList.add('hide')
+                showPopup('add_writer_popup')
+            } else if (e.target.closest('.delete-writer')) {
+                const button = e.target.closest('.delete-writer');
+                const writerID = button.closest('.writer-card').dataset.writerId;
+                getConfirmation('Delete this writer?').then(res => {
+                    if (res) {
+                        delete floGlobals.appObjects.articleWriters[writerID]
+                        button.closest('.writer-card').remove()
+                        floCloudAPI.updateObjectData('articleWriters').then(() => {
+                            notify('Writer deleted', 'success')
+                        }).catch(error => console.error(error))
+                    }
+                })
+            }
+        }
+
+        function saveWriter() {
+            const { floID, name, bio } = getWriterDetails()
+            if (floGlobals.appObjects.articleWriters.hasOwnProperty(floID)) {
+                const { name: oldName, bio: oldBio } = floGlobals.appObjects.articleWriters[floID]
+                if (name !== oldName || bio !== oldBio) {
+                    floGlobals.appObjects.articleWriters[floID].name = name
+                    floGlobals.appObjects.articleWriters[floID].bio = bio
+                    const writerCard = getRef('writers_list').querySelector(`.writer-card[data-writer-id="${floID}"]`)
+                    if (writerCard) {
+                        writerCard.querySelector('.writer-name').textContent = name
+                        writerCard.querySelector('.writer-bio').textContent = bio
+                    }
+                    floCloudAPI.updateObjectData('articleWriters').then(() => {
+                        notify('Writer details updated', 'success')
+                        hidePopup()
+                    }).catch(error => console.error(error))
+                } else {
+                    notify('Details are not changed', 'error')
+                }
+            } else {
+                floGlobals.appObjects.articleWriters[floID] = { name, bio }
+                floCloudAPI.updateObjectData('articleWriters').then(() => {
+                    getRef('writers_list').append(render.writerCard(floID))
+                    notify('Added writer details', 'success')
+                    hidePopup()
+                }).catch(error => console.error(error))
+            }
+        }
 
 
         function getSignedIn() {
@@ -1637,11 +1803,13 @@
                     floGlobals.subAdminData = {}
                     getRef('publishing_requests').addEventListener('click', handleRequestClick);
                     getRef('article_analytics').addEventListener('click', handleAnalyticsClick);
+                    getRef('writers_list').addEventListener('click', handleWritersClick);
                     document.querySelectorAll('.admin-option').forEach(elem => elem.classList.remove('hide'));
                     calculateVotes()
                 } else {
                     getRef('publishing_requests').removeEventListener('click', handleRequestClick)
                     getRef('article_analytics').removeEventListener('click', handleAnalyticsClick);
+                    getRef('writers_list').removeEventListener('click', handleWritersClick);
                     document.querySelectorAll('.admin-option').forEach(elem => elem.classList.add('hide'))
                 }
                 if (location.hash.includes('sign_in') || location.hash.includes('sign_up'))

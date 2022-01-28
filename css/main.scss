@@ -746,7 +746,7 @@ theme-toggle {
   margin-left: 0.4rem;
 }
 
-#go_to_top {
+.floating-button {
   position: fixed;
   z-index: 2;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
@@ -755,6 +755,8 @@ theme-toggle {
   right: 0;
   margin: 1.5rem;
   padding: 1rem;
+}
+#go_to_top {
   background-color: var(--foreground-color);
 }
 
@@ -836,11 +838,56 @@ footer {
   }
 }
 
+#add_writer_button {
+  background-color: var(--accent-color);
+  color: rgba(var(--background-color), 1);
+  .icon {
+    fill: rgba(var(--background-color), 1);
+  }
+}
+
+#writers_list {
+  margin: 1.5rem 0;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+}
+
+.writer-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: var(--foreground-color);
+  .writer-profile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 3rem;
+    width: 3rem;
+    border-radius: 2rem;
+    background-color: var(--accent-color);
+    text-align: center;
+    font-size: 100%;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--foreground-color);
+  }
+  sm-copy {
+    margin-top: -0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
 .hide {
   display: none !important;
 }
 
 @media screen and (max-width: 40rem) {
+  .writer-card {
+    .writer-profile {
+      height: 2.5rem;
+      width: 2.5rem;
+    }
+  }
   .hide-on-mobile {
     display: none;
   }

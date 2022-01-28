@@ -498,7 +498,6 @@ customElements.define('sm-input',
             this._helperText = '';
             this._errorText = '';
             this.isRequired = false;
-            this.hideRequired = false;
             this.validationFunction = undefined;
             this.reflectedAttributes = ['value', 'required', 'disabled', 'type', 'inputmode', 'readonly', 'min', 'max', 'pattern', 'minlength', 'maxlength', 'step'];
 
@@ -623,9 +622,6 @@ customElements.define('sm-input',
                     this.clearBtn.classList.remove('hide');
                 } else {
                     this.clearBtn.classList.add('hide');
-                    if (this.isRequired && !this.hideRequired) {
-                        this.feedbackText.textContent = '*required';
-                    }
                 }
             }
             if (!this.hasAttribute('placeholder') || this.getAttribute('placeholder').trim() === '') return;
@@ -692,20 +688,12 @@ customElements.define('sm-input',
                 }
                 else if (name === 'required') {
                     this.isRequired = this.hasAttribute('required');
-                    if (this.isRequired && !this.hideRequired) {
-                        this.feedbackText.textContent = '';
-                    } else {
-                        this.feedbackText.textContent = '*required';
-                    }
                     if (this.isRequired) {
                         this.setAttribute('aria-required', 'true');
                     }
                     else {
                         this.setAttribute('aria-required', 'false');
                     }
-                }
-                else if (name === 'hiderequired') {
-                    this.hideRequired = this.hasAttribute('hiderequired')
                 }
                 else if (name === 'readonly') {
                     if (this.hasAttribute('readonly')) {
@@ -909,7 +897,7 @@ customElements.define('sm-notifications', class extends HTMLElement {
 
     createNotification(message, options = {}) {
         const { pinned = false, icon = '' } = options;
-        const notification = document.createElement('div')
+        const notification = document.createElement('output')
         notification.id = this.randString(8)
         notification.classList.add('notification');
         let composition = ``;
@@ -990,8 +978,6 @@ customElements.define('sm-notifications', class extends HTMLElement {
     }
 });
 
-
-
 class Stack {
     constructor() {
         this.items = [];
@@ -1058,7 +1044,6 @@ smPopup.innerHTML = `
     right: 0;
     pointer-events: none;
     background: var(--backdrop-background);
-    backdrop-filter: blur(0.1rem);
     -webkit-transition: opacity 0.3s;
     -o-transition: opacity 0.3s;
     transition: opacity 0.3s;
@@ -1711,7 +1696,6 @@ smCopy.innerHTML = `
     --padding: 0;
     --background-color: inherit;
     --button-background-color: rgba(var(--text-color), 0.2);
-    --button-border-radius: 0.3rem;
 }
 .copy{
     display: grid;
@@ -1737,7 +1721,7 @@ smCopy.innerHTML = `
     border: none;
     padding: 0.4rem;
     background-color: inherit;
-    border-radius: var(--button-border-radius);
+    border-radius: var(--button-border-radius, 0.3rem);
 }
 .copy-button:active{
     background-color: var(--button-background-color);
