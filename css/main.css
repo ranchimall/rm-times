@@ -641,7 +641,8 @@ theme-toggle {
   flex-shrink: 0;
 }
 
-#query_results_list {
+#query_results_list,
+#written_article_list {
   margin: 1rem 0;
   padding-bottom: 2rem;
   gap: 1.6rem;
@@ -696,9 +697,35 @@ theme-toggle {
   padding-top: 1.5rem;
 }
 
+#writer {
+  align-items: flex-start;
+  align-content: flex-start;
+  padding: 1.5rem;
+  gap: 3rem;
+}
+#writer sm-copy {
+  font-size: 0.8rem;
+}
+
+#writer_profile {
+  display: flex;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 2rem;
+  background-color: var(--accent-color);
+  justify-content: center;
+}
+#writer_profile #writer_initials {
+  align-self: center;
+  font-weight: 700;
+  font-size: 1.8rem;
+  color: rgba(var(--background-color), 1);
+  text-transform: uppercase;
+}
+
 #article {
   gap: 2rem 0;
-  padding-bottom: 3rem;
+  padding-bottom: 6rem;
 }
 
 .hero-section {
@@ -715,10 +742,20 @@ theme-toggle {
 }
 
 .contributor {
+  color: inherit;
   font-size: 0.8rem;
   background-color: rgba(var(--text-color), 0.06);
   border-radius: 0.3rem;
   padding: 0.3rem 0.5rem;
+}
+
+#like_panel {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  padding: 1.5rem;
+  text-align: center;
+  justify-items: flex-start;
 }
 
 .up-vote {
@@ -790,11 +827,6 @@ theme-toggle {
 
 #go_to_top {
   background-color: var(--foreground-color);
-}
-
-footer {
-  padding: 3rem 1.5rem;
-  justify-items: center;
 }
 
 #dashboard {
@@ -993,6 +1025,17 @@ footer {
     width: 20rem;
   }
 
+  #writer {
+    gap: 1.5rem 6vw;
+    padding: 2rem 8vw;
+    grid-template-columns: 20rem 1fr;
+  }
+  #writer > section:first-of-type {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 1.5rem;
+  }
+
   #preview_popup h1,
 #article h1 {
     font-size: 2.5rem;
@@ -1018,6 +1061,25 @@ footer {
 
   #user_popup {
     --width: 28rem;
+  }
+}
+@media screen and (max-width: 64rem) {
+  .hide-on-medium {
+    display: none;
+  }
+}
+@media screen and (min-width: 64rem) {
+  #like_panel {
+    margin: 1.5rem;
+    width: 18vw;
+    border-radius: 0.8rem;
+    border: solid thin rgba(var(--text-color), 0.2);
+    justify-content: flex-start;
+    justify-items: flex-start;
+    text-align: left;
+  }
+  #like_panel .up-vote {
+    box-shadow: none;
   }
 }
 @media (any-hover: hover) {

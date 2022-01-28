@@ -183,6 +183,26 @@
                 <p class="empty-state">No related articles</p>
             </section>
         </article>
+        <article id="writer" class="page grid hide">
+            <section class="grid gap-1-5">
+                <div id="writer_profile">
+                    <span id="writer_initials"></span>
+                </div>
+                <div class="grid gap-0-5">
+                    <h3 id="writer_name"></h3>
+                    <p id="writer_bio"></p>
+                </div>
+                <div class="grid">
+                    <h5>FLO ID</h5>
+                    <sm-copy id="writer_id"></sm-copy>
+                </div>
+            </section>
+            <section>
+                <h4>Articles contributed</h4>
+                <div id="written_article_list" class="grid observe-empty-state"></div>
+                <p class="empty-state">No articles written</p>
+            </section>
+        </article>
         <article id="article" class="page page-layout hide">
             <section class="hero-section">
                 <h1 id="article_title"></h1>
@@ -209,17 +229,9 @@
             <section>
                 <h4>Article by -</h4>
                 <div id="article_contributors" class="flex"></div>
-                <span>created with RanchiMall Content collaboration app</span>
             </section>
-            <button id="go_to_top" class="floating-button hide" onclick="goToTop()">
-                <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
-                    fill="#000000">
-                    <path d="M0 0h24v24H0V0z" fill="none" />
-                    <path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14l-6-6z" />
-                </svg>
-            </button>
-            <footer class="grid gap-1-5">
-                <h4>Loved the article? Don't forget leave a like.</h4>
+            <section id="like_panel" class="grid gap-1-5">
+                <h4 class="hide-on-medium">Like the article to support creators.</h4>
                 <button id="upvote_button" class="button up-vote">
                     <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
                         fill="#000000">
@@ -229,7 +241,14 @@
                     </svg>
                     <div id="like_count">Loading...</div>
                 </button>
-            </footer>
+            </section>
+            <button id="go_to_top" class="floating-button hide" onclick="goToTop()">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                    fill="#000000">
+                    <path d="M0 0h24v24H0V0z" fill="none" />
+                    <path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14l-6-6z" />
+                </svg>
+            </button>
         </article>
         <article id="dashboard" class="page page-layout hide">
             <div class="flex justify-center align-center">
@@ -239,7 +258,7 @@
                     <strip-option value="writers">Writers</strip-option>
                 </strip-select>
             </div>
-            <section id="analytic_section" class="admin-section hide">
+            <section id="analytic_section" class="admin-section">
                 <ul id="article_analytics" class="grid gap-1-5 observe-empty-state"></ul>
                 <p class="empty-state">No articles</p>
             </section>
@@ -247,7 +266,7 @@
                 <ul id="publishing_requests" class="grid gap-1-5 observe-empty-state"></ul>
                 <p class="empty-state">No requests</p>
             </section>
-            <section id="writers_section" class="admin-section">
+            <section id="writers_section" class="admin-section hide">
                 <button id="add_writer_button" class="floating-button" onclick="showAddWriterPopup()">
                     <svg class="icon button__icon--left" xmlns="http://www.w3.org/2000/svg" height="24px"
                         viewBox="0 0 24 24" width="24px" fill="#000000">
@@ -464,6 +483,7 @@
                 <sm-copy id="user_flo_id"></sm-copy>
                 <sm-button class="danger" onclick="signOut()">Sign out</sm-button>
             </div>
+            <a href="#/dashboard" class="button">Admin dashboard</a>
         </section>
     </sm-popup>
     <template id="trending_article_template">
@@ -481,7 +501,7 @@
     </template>
     <template id="article_card_template">
         <li class="article-card grid">
-            <a href="" class="article-card__category"></a>
+            <a href="" class="article-card__category interact"></a>
             <a href="" class="grid article-link">
                 <h4 class="article-card__title"></h4>
                 <div class="flex">
@@ -824,7 +844,7 @@
             let params = {}
             let searchParams
             if (targetPage === '') {
-                pageId = 'dashboard'
+                pageId = 'main_page'
             } else {
                 if (targetPage.includes('/')) {
                     if (targetPage.includes('?')) {
@@ -842,10 +862,10 @@
                     pageId = targetPage
                 }
             }
-            // if (pageId === 'dashboard' && !floGlobals.isSubAdmin) {
-            //     pageId = 'home'
-            //     history.replaceState(null, null, '#/home')
-            // }
+            if (pageId === 'dashboard' && !floGlobals.isSubAdmin) {
+                pageId = 'home'
+                history.replaceState(null, null, '#/home')
+            }
             if (searchParams) {
                 const urlSearchParams = new URLSearchParams('?' + searchParams);
                 params = Object.fromEntries(urlSearchParams.entries());
@@ -863,6 +883,10 @@
                 case 'explore':
                     targetPage = 'explore'
                     renderExplorePage(params)
+                    break;
+                case 'writer':
+                    targetPage = 'writer'
+                    renderWriterPage(params)
                     break;
                 case 'dashboard':
                     targetPage = 'dashboard'
@@ -1094,13 +1118,15 @@
             getRef('article_body').innerHTML = allArticles[articleID]
             const frag = document.createDocumentFragment()
             contributors.forEach(id => {
-                frag.append(createElement('div', {
-                    textContent: id,
-                    className: 'contributor'
+                frag.append(createElement('a', {
+                    textContent: floGlobals.appObjects.articleWriters.hasOwnProperty(id) ? floGlobals.appObjects.articleWriters[id].name : id,
+                    className: 'contributor',
+                    attributes: { 'href': `#/writer?id=${id}` }
                 }))
             })
             getRef('article_contributors').innerHTML = ''
             getRef('article_contributors').append(frag)
+            getRef('like_count').textContent = floGlobals.appObjects.articles[articleID].votes
             // implement live voting
             if (!openedArticles.hasOwnProperty(articleID)) {
                 floCloudAPI.requestGeneralData(`article_${articleID}_votes`, {
@@ -1140,6 +1166,27 @@
             }
             getRef('query_results_list').innerHTML = ''
             getRef('query_results_list').append(frag)
+        }
+        function renderWriterPage(params) {
+            if (floGlobals.appObjects.articleWriters.hasOwnProperty(params.id)) {
+                const { name, bio } = floGlobals.appObjects.articleWriters[params.id]
+                getRef('writer_initials').textContent = name[0]
+                getRef('writer_name').textContent = name
+                getRef('writer_bio').textContent = bio
+            } else {
+                getRef('writer_initials').textContent = 'F'
+                getRef('writer_name').textContent = ''
+                getRef('writer_bio').textContent = ''
+            }
+            getRef('writer_id').value = params.id
+            const frag = document.createDocumentFragment()
+            const sortedByTime = getArrayOfObj(floGlobals.appObjects.articles).sort((a, b) => b.published - a.published)
+            const options = { keys: ['contributors'], threshold: 0 }
+            const fuse = new Fuse(sortedByTime, options)
+            const searchResult = fuse.search(params.id).map(v => v.item)
+            searchResult.forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
+            getRef('written_article_list').innerHTML = ''
+            getRef('written_article_list').append(frag)
         }
 
         let isSearchOn = false
