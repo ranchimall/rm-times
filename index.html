@@ -298,7 +298,7 @@
             </div>
             <sm-form>
                 <sm-input id="private_key_field" type="password" placeholder="FLO private key"
-                    error-text="Private key is invalid" data-private-key required></sm-input>
+                    error-text="Private key is invalid" data-private-key autofocus required></sm-input>
                 <sm-button id="sign_in_button" variant="primary" disabled>Sign In</sm-button>
             </sm-form>
             <div class="grid gap-0-5">
@@ -465,7 +465,7 @@
         </sm-form>
     </sm-popup>
     <sm-popup id="user_popup">
-        <header slot="header" class="popup__header">
+        <header slot="header" class="grid gap-1">
             <div class="flex align-center">
                 <button class="popup__header__close" onclick="hidePopup()">
                     <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
@@ -476,14 +476,31 @@
                     </svg>
                 </button>
             </div>
+            <svg id="user_background" viewBox="0 0 1866 801" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clip-path="url(#clip0_1_2)">
+                    <rect width="1866" height="801" fill="#256EFF" />
+                    <path d="M655.459 352.774L-428.587 256.546L-150.856 1393.08L655.459 352.774Z" fill="#FFC887" />
+                    <circle cx="1792" cy="300" r="441" fill="#145FF4" />
+                    <path d="M299.304 497.528L-155.279 457.524L-39.1418 933.681L299.304 497.528Z" fill="#FFD4A1" />
+                    <circle cx="1675" cy="36" r="217" fill="#1966FF" />
+                </g>
+                <defs>
+                    <clipPath id="clip0_1_2">
+                        <rect width="1866" height="801" fill="white" />
+                    </clipPath>
+                </defs>
+            </svg>
+            <h2>Settings</h2>
         </header>
         <section class="grid gap-1-5">
-            <div class="grid gap-0-5">
-                <h5>My FLO ID</h5>
-                <sm-copy id="user_flo_id"></sm-copy>
+            <div class="grid gap-1">
+                <div class="grid">
+                    <h5>My FLO ID</h5>
+                    <sm-copy id="user_flo_id"></sm-copy>
+                </div>
                 <sm-button class="danger" onclick="signOut()">Sign out</sm-button>
             </div>
-            <a href="#/dashboard" class="button">Admin dashboard</a>
+            <a href="#/dashboard" class="button hide admin-option" onclick="hidePopup()">Admin dashboard</a>
         </section>
     </sm-popup>
     <template id="trending_article_template">
@@ -1815,11 +1832,13 @@
                     resolve(getRef('private_key_field').value.trim())
                     getRef('private_key_field').value = ''
                     hidePopup()
+                    notify('Signed in', 'success')
                 }
                 getRef('sign_up_button').onclick = () => {
                     resolve(getRef('generated_private_key').value.trim())
                     getRef('generated_private_key').value = ''
                     hidePopup()
+                    notify('Signed in', 'success')
                 }
             })
         }

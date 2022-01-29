@@ -906,6 +906,36 @@ theme-toggle {
     font-size: 0.8rem;
   }
 }
+#user_popup {
+  overflow: hidden;
+  header {
+    overflow: hidden;
+    width: 100%;
+    position: relative;
+    padding: 1.5rem;
+    color: rgb(220, 220, 220);
+    h2 {
+      margin-top: 2rem;
+    }
+    .popup__header__close {
+      margin-left: -0.5rem;
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 2rem;
+      .icon {
+        fill: white;
+      }
+    }
+  }
+}
+#user_background {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  z-index: -1;
+  transform: scale(-1);
+  border-radius: 0 0 0.5rem 0.5rem;
+}
 
 .hide {
   display: none !important;
@@ -955,9 +985,6 @@ theme-toggle {
   .hide-on-desktop {
     display: none;
   }
-  #landing h1 {
-    -webkit-text-stroke-width: 0.1rem;
-  }
   #main_header {
     padding: 1rem 1.5rem;
   }
@@ -990,7 +1017,7 @@ theme-toggle {
   #preview_popup,
   #article {
     h1 {
-      font-size: 2.5rem;
+      font-size: 2rem;
     }
   }
   #article {
@@ -1010,7 +1037,7 @@ theme-toggle {
     }
   }
   #user_popup {
-    --width: 28rem;
+    --width: 26rem;
   }
 }
 @media screen and (max-width: 64rem) {
