@@ -27,7 +27,7 @@
                 FLO: ['https://livenet.flocha.in/', 'https://flosight.duckdns.org/'],
                 FLO_TEST: ['https://testnet-flosight.duckdns.org/', 'https://testnet.flocha.in/']
             },
-            adminID: "FKAEdnPfjXLHSYwrXQu377ugN4tXU7VGdf",
+            adminID: "FF5pewfsJxyrCvg8a2C8VXefeyVvKvQxmF",
             sendAmt: 0.001,
             fee: 0.0005,
 
@@ -37,7 +37,7 @@
 
             //for cloud apps
             subAdmins: [],
-            application: "Test_RM_Times",
+            application: "RM_Times",
             appObjects: {},
             generalData: {},
             lastVC: {}
@@ -211,7 +211,7 @@
                         <time id="published_time"></time><span class="bullet-point"></span><span
                             id="reading_time"></span>
                     </div>
-                    <button class="icon-only" title="Share preview" onclick="sharePreview()">
+                    <button class="icon-only" title="Share article" onclick="sharePreview()">
                         <svg class="icon" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24"
                             height="24px" viewBox="0 0 24 24" width="24px" fill="#000000">
                             <g>
@@ -353,7 +353,7 @@
                             d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
                     </svg>
                 </button>
-                <h3>Share article preview</h3>
+                <h3>Share article</h3>
             </div>
         </header>
         <span class="label">Copy link</span>
@@ -393,7 +393,7 @@
                 Edit
             </h4>
         </header>
-        <section>
+        <section class="grid gap-1-5">
             <div class="grid gap-1-5">
                 <div class="grid gap-0-5">
                     <h5>Title</h5>
@@ -594,7 +594,7 @@
                     </button>
                 </div>
             </div>
-            <div class="grid">
+            <div class="grid gap-0-5">
                 <h4 class="writer-name capitalize"></h4>
                 <p class="writer-bio"></p>
             </div>
@@ -908,7 +908,7 @@
                 case 'dashboard':
                     targetPage = 'dashboard'
                     await Promise.all([
-                        floCloudAPI.requestObjectData('publishedVc'),
+                        floCloudAPI.requestObjectData('admin'),
                         floCloudAPI.requestGeneralData('publishing_requests', {
                             callback: (d, e) => renderDashboard(d)
                         })
@@ -1050,17 +1050,17 @@
             },
             requestCard(details) {
                 const { message: { articleID, category, title }, time, vectorClock } = details
-                if (!floGlobals.appObjects.publishedVc.hasOwnProperty(vectorClock)) {
+                if (!floGlobals.appObjects.adminData.publishedVc.hasOwnProperty(vectorClock)) {
                     const clone = getRef('request_template').content.cloneNode(true).firstElementChild
                     clone.dataset.vc = vectorClock
                     clone.querySelector('.request-card__title').textContent = title
                     clone.querySelector('.request-card__time').textContent = getFormattedTime(time)
-                    clone.querySelector('.publish-button').textContent = floGlobals.appObjects['articles'].hasOwnProperty(articleID) ? 'Update' : 'Publish'
+                    clone.querySelector('.publish-button').textContent = floGlobals.appObjects.rmTimes.articles.hasOwnProperty(articleID) ? 'Update' : 'Publish'
                     return clone
                 }
             },
             articleRow(articleID) {
-                const { category, title, published, votes } = floGlobals.appObjects.articles[articleID]
+                const { category, title, published, votes } = floGlobals.appObjects.rmTimes.articles[articleID]
                 const clone = getRef('article_row_template').content.cloneNode(true).firstElementChild
                 clone.querySelector('.article-card__title').textContent = title
                 clone.querySelector('.article-row__published').textContent = relativeTime.from(published)
@@ -1069,7 +1069,7 @@
                 return clone
             },
             writerCard(writerID) {
-                const { name, bio } = floGlobals.appObjects.articleWriters[writerID]
+                const { name, bio } = floGlobals.appObjects.rmTimes.articleWriters[writerID]
                 const clone = getRef('article_writer_template').content.cloneNode(true).firstElementChild
                 clone.dataset.writerId = writerID
                 clone.querySelector('.writer-profile').textContent = name[0]
@@ -1082,9 +1082,8 @@
 
         const getArticles = async () => {
             await Promise.all([
-                floCloudAPI.requestObjectData('articles'),
+                floCloudAPI.requestObjectData('rmTimes'),
                 floCloudAPI.requestObjectData('articlesContent'),
-                floCloudAPI.requestObjectData('articleWriters'),
             ])
             delete floGlobals.appObjects.articlesContent
             showPage(window.location.hash, { firstLoad: true })
@@ -1104,15 +1103,36 @@
         function renderHomepage() {
             const frag = document.createDocumentFragment()
             // Render article topics
-            const categories = ['Art', 'Culture', 'Politics', 'Science', 'Tech']
-            categories.forEach(category => frag.append(createElement('a', {
-                textContent: category,
-                attributes: { href: `#/explore?type=category&query=${category.toLowerCase()}` },
-                className: 'category interact'
+            const categories = [
+                {
+                    title: 'Art',
+                    icon: `<svg class="icon" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><g><rect fill="none" height="24" width="24"/></g><g><g><g><g><path d="M12,22C6.49,22,2,17.51,2,12S6.49,2,12,2s10,4.04,10,9c0,3.31-2.69,6-6,6h-1.77c-0.28,0-0.5,0.22-0.5,0.5 c0,0.12,0.05,0.23,0.13,0.33c0.41,0.47,0.64,1.06,0.64,1.67C14.5,20.88,13.38,22,12,22z M12,4c-4.41,0-8,3.59-8,8s3.59,8,8,8 c0.28,0,0.5-0.22,0.5-0.5c0-0.16-0.08-0.28-0.14-0.35c-0.41-0.46-0.63-1.05-0.63-1.65c0-1.38,1.12-2.5,2.5-2.5H16 c2.21,0,4-1.79,4-4C20,7.14,16.41,4,12,4z"/><circle cx="6.5" cy="11.5" r="1.5"/><circle cx="9.5" cy="7.5" r="1.5"/><circle cx="14.5" cy="7.5" r="1.5"/><circle cx="17.5" cy="11.5" r="1.5"/></g></g></g></g></svg>`
+                },
+                {
+                    title: 'Culture',
+                    icon: `<svg class="icon" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><g><rect fill="none" height="24" width="24"/></g><g><g><circle cx="19" cy="6.5" r="1"/><circle cx="15" cy="6.5" r="1"/><path d="M16.99,9c-1.38,0-2.5,0.84-2.5,1.88h5C19.49,9.84,18.37,9,16.99,9z"/><path d="M1,16c0,3.31,2.69,6,6,6s6-2.69,6-6V9H1V16z M3,11h8v5c0,2.21-1.79,4-4,4s-4-1.79-4-4V11z"/><path d="M11,2v5.5h2V4h8v5c0,2.21-1.79,4-4,4c-0.95,0-1.81-0.35-2.5-0.9v2.35C15.26,14.8,16.11,15,17,15c3.31,0,6-2.69,6-6V2H11z"/><circle cx="5" cy="13.5" r="1"/><circle cx="9" cy="13.5" r="1"/><path d="M7,17.88c1.38,0,2.5-0.84,2.5-1.88h-5C4.5,17.04,5.62,17.88,7,17.88z"/></g></g></svg>`
+                },
+                {
+                    title: 'Politics',
+                    icon: `<svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M6.5 10h-2v7h2v-7zm6 0h-2v7h2v-7zm8.5 9H2v2h19v-2zm-2.5-9h-2v7h2v-7zm-7-6.74L16.71 6H6.29l5.21-2.74m0-2.26L2 6v2h19V6l-9.5-5z"/></svg>`
+                },
+                {
+                    title: 'Science',
+                    icon: `<svg class="icon" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><g><rect fill="none" height="24" width="24"/></g><g><path d="M13,11.33L18,18H6l5-6.67V6h2 M15.96,4H8.04C7.62,4,7.39,4.48,7.65,4.81L9,6.5v4.17L3.2,18.4C2.71,19.06,3.18,20,4,20h16 c0.82,0,1.29-0.94,0.8-1.6L15,10.67V6.5l1.35-1.69C16.61,4.48,16.38,4,15.96,4L15.96,4z"/></g></svg>`
+                },
+                {
+                    title: 'Tech',
+                    icon: `<svg class="icon" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><g><rect fill="none" height="24" width="24"/></g><g><path d="M19.93,8.35l-3.6,1.68L14,7.7V6.3l2.33-2.33l3.6,1.68c0.38,0.18,0.82,0.01,1-0.36c0.18-0.38,0.01-0.82-0.36-1l-3.92-1.83 c-0.38-0.18-0.83-0.1-1.13,0.2L13.78,4.4C13.6,4.16,13.32,4,13,4c-0.55,0-1,0.45-1,1v1H8.82C8.4,4.84,7.3,4,6,4C4.34,4,3,5.34,3,7 c0,1.1,0.6,2.05,1.48,2.58L7.08,18H6c-1.1,0-2,0.9-2,2v1h13v-1c0-1.1-0.9-2-2-2h-1.62L8.41,8.77C8.58,8.53,8.72,8.28,8.82,8H12v1 c0,0.55,0.45,1,1,1c0.32,0,0.6-0.16,0.78-0.4l1.74,1.74c0.3,0.3,0.75,0.38,1.13,0.2l3.92-1.83c0.38-0.18,0.54-0.62,0.36-1 C20.75,8.34,20.31,8.17,19.93,8.35z M6,8C5.45,8,5,7.55,5,7c0-0.55,0.45-1,1-1s1,0.45,1,1C7,7.55,6.55,8,6,8z M11.11,18H9.17 l-2.46-8h0.1L11.11,18z"/></g></svg>`
+                }
+            ]
+            categories.forEach(({ title, icon }) => frag.append(createElement('a', {
+                attributes: { href: `#/explore?type=category&query=${title.toLowerCase()}` },
+                className: 'category interact',
+                innerHTML: `${icon}<span>${title}</span>`,
             })))
             getRef('news_categories_list').innerHTML = ''
             getRef('news_categories_list').append(frag)
-            const arrOfArticles = getArrayOfObj(floGlobals.appObjects.articles)
+            const arrOfArticles = getArrayOfObj(floGlobals.appObjects.rmTimes.articles)
             // Render trending article card
             let sortedByVotes = arrOfArticles.sort((a, b) => b.votes - a.votes)
             sortedByVotes.slice(0, 3).forEach(articleDetail => frag.append(render.trendingArticleCard(articleDetail)))
@@ -1128,7 +1148,7 @@
         const openedArticles = {}
         async function renderArticle(articleID, firstLoad = true) {
             const allArticles = await compactIDB.readData('appObjects', 'articlesContent')
-            const { title, published, readTime, contributors } = floGlobals.appObjects.articles[articleID]
+            const { title, published, readTime, contributors } = floGlobals.appObjects.rmTimes.articles[articleID]
             getRef('article_title').textContent = title
             getRef('published_time').textContent = getFormattedTime(published, 'date-only')
             getRef('reading_time').textContent = `${readTime} Min read`
@@ -1136,24 +1156,24 @@
             const frag = document.createDocumentFragment()
             contributors.forEach(id => {
                 frag.append(createElement('a', {
-                    textContent: floGlobals.appObjects.articleWriters.hasOwnProperty(id) ? floGlobals.appObjects.articleWriters[id].name : id,
+                    textContent: floGlobals.appObjects.rmTimes.articleWriters.hasOwnProperty(id) ? floGlobals.appObjects.rmTimes.articleWriters[id].name : id,
                     className: 'contributor',
                     attributes: { 'href': `#/writer?id=${id}` }
                 }))
             })
             getRef('article_contributors').innerHTML = ''
             getRef('article_contributors').append(frag)
-            getRef('like_count').textContent = floGlobals.appObjects.articles[articleID].votes
+            getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
             // implement live voting
             if (!openedArticles.hasOwnProperty(articleID)) {
                 floCloudAPI.requestGeneralData(`article_${articleID}_votes`, {
-                    lowerVectorClock: floGlobals.appObjects.articles[articleID].lastCountedVC + 1,
+                    lowerVectorClock: floGlobals.appObjects.rmTimes.articles[articleID].lastCountedVC + 1,
                     callback: (allVotes, e) => {
                         if (firstLoad) {
                             for (const vote in allVotes) {
-                                floGlobals.appObjects.articles[articleID].votes += allVotes[vote].message.voteCount || 1
+                                floGlobals.appObjects.rmTimes.articles[articleID].votes += allVotes[vote].message.voteCount || 1
                             }
-                            getRef('like_count').textContent = floGlobals.appObjects.articles[articleID].votes
+                            getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
                         } else {
                             for (const msg in allVotes) {
                                 animateLikeCount(allVotes[msg].message.voteCount, articleID)
@@ -1164,14 +1184,14 @@
                 })
                 openedArticles[articleID] = true
             } else {
-                getRef('like_count').textContent = floGlobals.appObjects.articles[articleID].votes
+                getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
             }
         }
 
         function renderExplorePage(params) {
             const { type, query } = params
             const frag = document.createDocumentFragment()
-            const sortedByTime = getArrayOfObj(floGlobals.appObjects.articles).sort((a, b) => b.published - a.published)
+            const sortedByTime = getArrayOfObj(floGlobals.appObjects.rmTimes.articles).sort((a, b) => b.published - a.published)
             if (type === 'recent') {
                 sortedByTime.forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
             } else {
@@ -1185,8 +1205,8 @@
             getRef('query_results_list').append(frag)
         }
         function renderWriterPage(params) {
-            if (floGlobals.appObjects.articleWriters.hasOwnProperty(params.id)) {
-                const { name, bio } = floGlobals.appObjects.articleWriters[params.id]
+            if (floGlobals.appObjects.rmTimes.articleWriters.hasOwnProperty(params.id)) {
+                const { name, bio } = floGlobals.appObjects.rmTimes.articleWriters[params.id]
                 getRef('writer_initials').textContent = name[0]
                 getRef('writer_name').textContent = name
                 getRef('writer_bio').textContent = bio
@@ -1197,7 +1217,7 @@
             }
             getRef('writer_id').value = params.id
             const frag = document.createDocumentFragment()
-            const sortedByTime = getArrayOfObj(floGlobals.appObjects.articles).sort((a, b) => b.published - a.published)
+            const sortedByTime = getArrayOfObj(floGlobals.appObjects.rmTimes.articles).sort((a, b) => b.published - a.published)
             const options = { keys: ['contributors'], threshold: 0 }
             const fuse = new Fuse(sortedByTime, options)
             const searchResult = fuse.search(params.id).map(v => v.item)
@@ -1271,7 +1291,7 @@
                     keys: ['title', 'tags', 'category'],
                     threshold: 0.3
                 }
-                const fuse = new Fuse(getArrayOfObj(floGlobals.appObjects.articles).sort((a, b) => b.published - a.published), options)
+                const fuse = new Fuse(getArrayOfObj(floGlobals.appObjects.rmTimes.articles).sort((a, b) => b.published - a.published), options)
                 const searchResult = fuse.search(searchKey).map(v => v.item)
                 getRef('search_suggestions').innerHTML = ''
                 if (searchResult.length) {
@@ -1420,18 +1440,18 @@
                 duration: 150,
                 ease: 'easing',
             }
-            floGlobals.appObjects.articles[articleID].votes += voteCount
+            floGlobals.appObjects.rmTimes.articles[articleID].votes += voteCount
             getRef('like_count').animate(slideOutUp, animOptions)
                 .onfinish = (e) => {
                     e.target.cancel()
                 }
             const tempCount = document.createElement('div')
             tempCount.classList.add('temp-count')
-            tempCount.textContent = floGlobals.appObjects.articles[articleID].votes
+            tempCount.textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
             getRef('like_count').after(tempCount)
             tempCount.animate(slideInUp, animOptions)
                 .onfinish = () => {
-                    getRef('like_count').textContent = floGlobals.appObjects.articles[articleID].votes
+                    getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
                     tempCount.remove()
                 }
         }
@@ -1539,18 +1559,18 @@
                 if (card)
                     frag.prepend(card)
             }
-            floCloudAPI.updateObjectData('publishedVc')
+            floCloudAPI.updateObjectData('adminData')
             getRef('publishing_requests').innerHTML = ''
             getRef('publishing_requests').append(frag)
 
-            for (const articleKey in floGlobals.appObjects.articles) {
+            for (const articleKey in floGlobals.appObjects.rmTimes.articles) {
                 const card = render.articleRow(articleKey)
                 frag.prepend(card)
             }
             getRef('article_analytics').innerHTML = ''
             getRef('article_analytics').append(frag)
 
-            for (const articleKey in floGlobals.appObjects.articleWriters) {
+            for (const articleKey in floGlobals.appObjects.rmTimes.articleWriters) {
                 const card = render.writerCard(articleKey)
                 frag.prepend(card)
             }
@@ -1560,33 +1580,32 @@
 
         function publishArticle(vc) {
             const { message: { articleID, content, contributors, title, readTime }, vectorClock } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc];
-            const isPublished = floGlobals.appObjects['articles'].hasOwnProperty(articleID)
+            const isPublished = floGlobals.appObjects.rmTimes.articles.hasOwnProperty(articleID)
             getConfirmation(`${isPublished ? 'Update' : 'Publish'} article?`).then(res => {
                 if (res) {
                     const { title, category, summary, published, tags, contributors } = getArticleMetaData()
-                    floGlobals.appObjects['publishedVc'][vectorClock] = true
+                    floGlobals.appObjects.adminData.publishedVc[vectorClock] = true
                     floGlobals.appObjects.articlesContent[articleID] = content
                     if (isPublished) {
-                        floGlobals.appObjects['articles'][articleID]['updated'] = Date.now();
+                        floGlobals.appObjects.rmTimes.articles[articleID]['updated'] = Date.now();
                     } else {
-                        floGlobals.appObjects.articles[articleID] = {
+                        floGlobals.appObjects.rmTimes.articles[articleID] = {
                             published: Date.now(),
                             votes: 0,
                             lastCountedVC: ''
                         }
-                        floGlobals.appObjects.articleVotes[articleID] = { votes: {} }
+                        floGlobals.appObjects.adminData.articleVotes[articleID] = { votes: {} }
                     }
-                    floGlobals.appObjects['articles'][articleID].category = category
-                    floGlobals.appObjects['articles'][articleID].contributors = contributors
-                    floGlobals.appObjects['articles'][articleID].title = title
-                    floGlobals.appObjects['articles'][articleID].tags = tags
-                    floGlobals.appObjects['articles'][articleID].readTime = readTime
-                    floGlobals.appObjects['articles'][articleID].summary = summary
+                    floGlobals.appObjects.rmTimes.articles[articleID].category = category
+                    floGlobals.appObjects.rmTimes.articles[articleID].contributors = contributors
+                    floGlobals.appObjects.rmTimes.articles[articleID].title = title
+                    floGlobals.appObjects.rmTimes.articles[articleID].tags = tags
+                    floGlobals.appObjects.rmTimes.articles[articleID].readTime = readTime
+                    floGlobals.appObjects.rmTimes.articles[articleID].summary = summary
                     Promise.all([
-                        floCloudAPI.updateObjectData('articles'),
-                        floCloudAPI.updateObjectData('publishedVc'),
+                        floCloudAPI.updateObjectData('rmTimes'),
+                        floCloudAPI.updateObjectData('adminData'),
                         floCloudAPI.updateObjectData('articlesContent'),
-                        floCloudAPI.updateObjectData('articleVotes'),
                     ]).then(() => {
                         notify(`${isPublished ? 'Updated' : 'Published'} article`, 'success')
                         document.querySelector(`.request-card[data-vc="${vc}"]`).remove()
@@ -1601,9 +1620,9 @@
                 const button = e.target.closest('.publish-button');
                 const vc = button.closest('.request-card').dataset.vc;
                 const { message: { articleID, title, contributors } } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc]
-                const isPublished = floGlobals.appObjects['articles'].hasOwnProperty(articleID)
+                const isPublished = floGlobals.appObjects.rmTimes.articles.hasOwnProperty(articleID)
                 if (isPublished)
-                    setArticleMetaData(floGlobals.appObjects.articles[articleID])
+                    setArticleMetaData(floGlobals.appObjects.rmTimes.articles[articleID])
                 else
                     setArticleMetaData({ title, contributors })
                 floGlobals.subAdminData = {
@@ -1651,7 +1670,7 @@
             if (e.target.closest('.edit-article')) {
                 const button = e.target.closest('.edit-article');
                 const articleID = button.dataset.articleId;
-                setArticleMetaData(floGlobals.appObjects.articles[articleID])
+                setArticleMetaData(floGlobals.appObjects.rmTimes.articles[articleID])
                 floGlobals.subAdminData = {
                     actionType: 'analytics',
                     articleID,
@@ -1666,14 +1685,14 @@
             getConfirmation('Update article meta data?').then(res => {
                 if (res) {
                     const { title, category, summary, published, tags, contributors } = getArticleMetaData()
-                    floGlobals.appObjects['articles'][articleID].category = category
-                    floGlobals.appObjects['articles'][articleID].title = title
-                    floGlobals.appObjects['articles'][articleID].tags = tags
-                    floGlobals.appObjects['articles'][articleID].summary = summary
-                    floGlobals.appObjects['articles'][articleID].contributors = contributors
+                    floGlobals.appObjects.rmTimes.articles[articleID].category = category
+                    floGlobals.appObjects.rmTimes.articles[articleID].title = title
+                    floGlobals.appObjects.rmTimes.articles[articleID].tags = tags
+                    floGlobals.appObjects.rmTimes.articles[articleID].summary = summary
+                    floGlobals.appObjects.rmTimes.articles[articleID].contributors = contributors
                     Promise.all([
-                        floCloudAPI.updateObjectData('articles'),
-                        floCloudAPI.updateObjectData('publishedVc'),
+                        floCloudAPI.updateObjectData('rmTimes'),
+                        floCloudAPI.updateObjectData('adminData'),
                     ]).then(() => {
                         notify(`Updated article meta data`, 'success')
                         hidePopup()
@@ -1691,14 +1710,14 @@
         }
 
         async function calculateVotes() {
-            await floCloudAPI.requestObjectData('articleVotes')
+            await floCloudAPI.requestObjectData('adminData')
             const articlesVotesProm = []
             const articleIDs = []
-            for (const articleKey in floGlobals.appObjects.articles) {
-                if (floGlobals.appObjects.articleVotes.hasOwnProperty(articleKey) && floGlobals.appObjects.articles[articleKey].lastCountedVC !== '') {
+            for (const articleKey in floGlobals.appObjects.rmTimes.articles) {
+                if (floGlobals.appObjects.adminData.articleVotes.hasOwnProperty(articleKey) && floGlobals.appObjects.rmTimes.articles[articleKey].lastCountedVC !== '') {
                     articlesVotesProm.push(
                         floCloudAPI.requestGeneralData(`article_${articleKey}_votes`, {
-                            lowerVectorClock: floGlobals.appObjects.articles[articleKey].lastCountedVC + 1
+                            lowerVectorClock: floGlobals.appObjects.rmTimes.articles[articleKey].lastCountedVC + 1
                         })
                     )
                 } else {
@@ -1710,31 +1729,31 @@
             }
             Promise.all(articlesVotesProm).then(res => {
                 res.forEach((articleVotes, index) => {
-                    if (!floGlobals.appObjects.articleVotes.hasOwnProperty(articleIDs[index])) {
-                        floGlobals.appObjects.articleVotes[articleIDs[index]].votes = {}
+                    if (!floGlobals.appObjects.adminData.articleVotes.hasOwnProperty(articleIDs[index])) {
+                        floGlobals.appObjects.adminData.articleVotes[articleIDs[index]].votes = {}
                     }
-                    if (floGlobals.appObjects.articles[articleIDs[index]].lastCountedVC === '') {
+                    if (floGlobals.appObjects.rmTimes.articles[articleIDs[index]].lastCountedVC === '') {
                         articleVotes = floGlobals.generalData[`article_${articleIDs[index]}_votes|${floGlobals.adminID}|${floGlobals.application}`]
                     }
                     for (const voteKey in articleVotes) {
                         const { senderID, message: { voteCount }, type, vectorClock, time } = articleVotes[voteKey]
-                        const { votes } = floGlobals.appObjects.articleVotes[articleIDs[index]];
+                        const { votes } = floGlobals.appObjects.adminData.articleVotes[articleIDs[index]];
                         if (votes[senderID]) {
-                            floGlobals.appObjects.articleVotes[articleIDs[index]].votes[senderID] += voteCount || 1
+                            floGlobals.appObjects.adminData.articleVotes[articleIDs[index]].votes[senderID] += voteCount || 1
                         } else {
-                            floGlobals.appObjects.articleVotes[articleIDs[index]].votes[senderID] = voteCount || 1
+                            floGlobals.appObjects.adminData.articleVotes[articleIDs[index]].votes[senderID] = voteCount || 1
                         }
-                        floGlobals.appObjects.articles[articleIDs[index]].lastCountedVC = vectorClock
+                        floGlobals.appObjects.rmTimes.articles[articleIDs[index]].lastCountedVC = vectorClock
                     }
                     let totalArticleVotes = 0
-                    for (const voter in floGlobals.appObjects.articleVotes[articleIDs[index]].votes) {
-                        totalArticleVotes += floGlobals.appObjects.articleVotes[articleIDs[index]].votes[voter]
+                    for (const voter in floGlobals.appObjects.adminData.articleVotes[articleIDs[index]].votes) {
+                        totalArticleVotes += floGlobals.appObjects.adminData.articleVotes[articleIDs[index]].votes[voter]
                     }
-                    floGlobals.appObjects.articles[articleIDs[index]].votes = totalArticleVotes
+                    floGlobals.appObjects.rmTimes.articles[articleIDs[index]].votes = totalArticleVotes
                 })
                 Promise.all([
-                    floCloudAPI.updateObjectData('articles'),
-                    floCloudAPI.updateObjectData('articleVotes')
+                    floCloudAPI.updateObjectData('rmTimes'),
+                    floCloudAPI.updateObjectData('adminData')
                 ])
                     .then(() => {
                         console.log('calculated votes')
@@ -1750,7 +1769,7 @@
 
         function setWriterDetails(writerID) {
             console.log(writerID)
-            const { name, bio } = floGlobals.appObjects.articleWriters[writerID]
+            const { name, bio } = floGlobals.appObjects.rmTimes.articleWriters[writerID]
             getRef('get_writer_id').value = writerID
             getRef('get_writer_name').value = name
             getRef('get_writer_bio').value = bio
@@ -1786,9 +1805,9 @@
                 const writerID = button.closest('.writer-card').dataset.writerId;
                 getConfirmation('Delete this writer?').then(res => {
                     if (res) {
-                        delete floGlobals.appObjects.articleWriters[writerID]
+                        delete floGlobals.appObjects.rmTimes.articleWriters[writerID]
                         button.closest('.writer-card').remove()
-                        floCloudAPI.updateObjectData('articleWriters').then(() => {
+                        floCloudAPI.updateObjectData('rmTimes').then(() => {
                             notify('Writer deleted', 'success')
                         }).catch(error => console.error(error))
                     }
@@ -1798,17 +1817,17 @@
 
         function saveWriter() {
             const { floID, name, bio } = getWriterDetails()
-            if (floGlobals.appObjects.articleWriters.hasOwnProperty(floID)) {
-                const { name: oldName, bio: oldBio } = floGlobals.appObjects.articleWriters[floID]
+            if (floGlobals.appObjects.rmTimes.articleWriters.hasOwnProperty(floID)) {
+                const { name: oldName, bio: oldBio } = floGlobals.appObjects.rmTimes.articleWriters[floID]
                 if (name !== oldName || bio !== oldBio) {
-                    floGlobals.appObjects.articleWriters[floID].name = name
-                    floGlobals.appObjects.articleWriters[floID].bio = bio
+                    floGlobals.appObjects.rmTimes.articleWriters[floID].name = name
+                    floGlobals.appObjects.rmTimes.articleWriters[floID].bio = bio
                     const writerCard = getRef('writers_list').querySelector(`.writer-card[data-writer-id="${floID}"]`)
                     if (writerCard) {
                         writerCard.querySelector('.writer-name').textContent = name
                         writerCard.querySelector('.writer-bio').textContent = bio
                     }
-                    floCloudAPI.updateObjectData('articleWriters').then(() => {
+                    floCloudAPI.updateObjectData('rmTimes').then(() => {
                         notify('Writer details updated', 'success')
                         hidePopup()
                     }).catch(error => console.error(error))
@@ -1816,8 +1835,8 @@
                     notify('Details are not changed', 'error')
                 }
             } else {
-                floGlobals.appObjects.articleWriters[floID] = { name, bio }
-                floCloudAPI.updateObjectData('articleWriters').then(() => {
+                floGlobals.appObjects.rmTimes.articleWriters[floID] = { name, bio }
+                floCloudAPI.updateObjectData('rmTimes').then(() => {
                     getRef('writers_list').append(render.writerCard(floID))
                     notify('Added writer details', 'success')
                     hidePopup()
