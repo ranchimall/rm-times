@@ -212,6 +212,9 @@ ul {
 .flex {
   display: flex;
 }
+.flex-wrap {
+  flex-wrap: wrap;
+}
 
 .grid {
   display: grid;
@@ -433,6 +436,7 @@ details {
     display: flex;
     user-select: none;
     cursor: pointer;
+    padding: 0.5rem 0;
   }
 
   &[open] > summary {
@@ -534,7 +538,8 @@ sm-copy {
   fill: var(--danger-color);
 }
 
-main {
+#main {
+  overflow-y: hidden;
   display: grid;
   height: 100%;
   grid-template-rows: auto 1fr;
@@ -706,15 +711,40 @@ theme-toggle {
 }
 
 #article {
-  gap: 2rem 0;
-  padding-bottom: 6rem;
+  display: flex;
+  padding: 1.5rem;
+  max-height: 100%;
+  overflow-y: auto;
+  main {
+    & > section:last-of-type {
+      padding-bottom: 6rem;
+    }
+  }
 }
-
+#article_aside {
+  position: absolute;
+  left: 0;
+  top: 5rem;
+  padding: 1.5rem;
+}
+#article_map_container {
+  margin-top: 1.5rem;
+  display: grid;
+  gap: 0.5rem;
+  button {
+    line-height: 1.3;
+    width: 100%;
+    padding: 0.5rem 0;
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: rgba(var(--text-color), 0.8);
+  }
+}
 .hero-section {
   display: grid;
   gap: 0.5rem;
   grid-template-columns: minmax(0, 1fr);
-  padding-top: 1.5rem;
 }
 #article_contributors {
   flex-wrap: wrap;
@@ -728,24 +758,18 @@ theme-toggle {
   border-radius: 0.3rem;
   padding: 0.3rem 0.5rem;
 }
-#like_panel {
+#action_panel {
   position: fixed;
   bottom: 0;
-  width: 100%;
-  padding: 1.5rem;
-  text-align: center;
-  justify-items: flex-start;
+  left: 0;
+  gap: 0.5rem;
+  align-items: center;
 }
 .up-vote {
   display: grid;
-  grid-template-columns: auto 1fr;
   position: relative;
-  padding: 0.8rem;
-  border-radius: 2rem;
-  background-color: var(--foreground-color);
-  -webkit-box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-  border: solid rgba(var(--text-color), 0.2) thin;
+  padding: 0.5rem;
+  border-radius: 0.3rem;
   & > * {
     pointer-events: none;
   }
@@ -759,14 +783,6 @@ theme-toggle {
     }
   }
 
-  &.liked {
-    background-color: var(--like-color);
-    color: #fff;
-    .icon {
-      fill: #fff;
-    }
-  }
-
   .expanding-heart,
   .ring {
     grid-area: 1/1;
@@ -774,8 +790,6 @@ theme-toggle {
   & .icon {
     grid-area: 1/1;
     fill: var(--like-color);
-    height: 1.5rem;
-    width: 1.5rem;
     -webkit-transition: -webkit-transform 0.2s;
     transition: -webkit-transform 0.2s;
     transition: transform 0.2s;
@@ -831,7 +845,7 @@ theme-toggle {
   gap: 0.5rem;
   border-radius: 0.5rem;
   align-items: flex-start;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr);
   &__title {
     grid-area: 2/1;
   }
@@ -840,6 +854,7 @@ theme-toggle {
   }
   .flex {
     grid-row: span 2;
+    margin-top: 0.5rem;
   }
   .publish-button {
     text-transform: uppercase;
@@ -976,6 +991,14 @@ theme-toggle {
       width: 2.5rem;
     }
   }
+  #action_panel {
+    width: min-content;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    background-color: var(--foreground-color);
+    margin: 1.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
+  }
   .hide-on-mobile {
     display: none;
   }
@@ -1049,9 +1072,39 @@ theme-toggle {
     }
   }
   #article {
-    grid-template-columns: 1fr 60ch 1fr;
+    gap: 6vw;
+    padding: 0;
+    grid-template-columns: 16rem 1fr;
+    main {
+      width: 60ch;
+      padding: 1.5rem 0;
+    }
+  }
+  #article_aside {
+    width: 20rem;
+    padding: 1.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100%;
+    overflow-y: auto;
+  }
+  #article_map_container {
+    margin-bottom: 3rem;
   }
 
+  #action_panel {
+    position: relative;
+    margin-top: auto;
+  }
+
+  .request-card {
+    grid-template-columns: 1fr auto;
+    .flex {
+      margin-top: 0;
+    }
+  }
   #preview_popup {
     --width: 60ch;
   }
@@ -1069,20 +1122,6 @@ theme-toggle {
 @media screen and (max-width: 64rem) {
   .hide-on-medium {
     display: none;
-  }
-}
-@media screen and (min-width: 64rem) {
-  #like_panel {
-    margin: 1.5rem;
-    width: 18vw;
-    border-radius: 0.8rem;
-    border: solid thin rgba(var(--text-color), 0.2);
-    justify-content: flex-start;
-    justify-items: flex-start;
-    text-align: left;
-    .up-vote {
-      box-shadow: none;
-    }
   }
 }
 @media (any-hover: hover) {

@@ -92,7 +92,7 @@
             <h4>Loading RM Times</h4>
         </section>
     </article>
-    <main class="hide">
+    <div id="main" class="hide">
         <header id="main_header">
             <button id="search_button" class="icon-only" title="Search for articles" onclick="toggleSearch()">
                 <svg class="icon" slot="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
@@ -203,14 +203,13 @@
                 <p class="empty-state">No articles written</p>
             </section>
         </article>
-        <article id="article" class="page page-layout hide">
-            <section class="hero-section">
-                <h1 id="article_title"></h1>
-                <div class="flex space-between align-center">
-                    <div class="flex align-center">
-                        <time id="published_time"></time><span class="bullet-point"></span><span
-                            id="reading_time"></span>
-                    </div>
+        <article id="article" class="page hide">
+            <aside id="article_aside">
+                <nav id="article_map" class="hide-on-mobile" aria-label="secondary navigation for article sections">
+                    <h4>In this article</h4>
+                    <ul id="article_map_container"></ul>
+                </nav>
+                <div id="action_panel" class="flex">
                     <button class="icon-only" title="Share article" onclick="sharePreview()">
                         <svg class="icon" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24"
                             height="24px" viewBox="0 0 24 24" width="24px" fill="#000000">
@@ -223,25 +222,43 @@
                             </g>
                         </svg>
                     </button>
+                    <button id="upvote_button" class="up-vote" title="Give a like">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
+                            width="24px" fill="#000000">
+                            <path d="M0 0h24v24H0z" fill="none" />
+                            <path
+                                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                        </svg>
+                        <div id="like_count">Loading...</div>
+                    </button>
                 </div>
-            </section>
-            <section id="article_body" class="grid"></section>
-            <section>
-                <h4>Article by -</h4>
-                <div id="article_contributors" class="flex"></div>
-            </section>
-            <section id="like_panel" class="grid gap-1-5">
-                <h4 class="hide-on-medium">Like the article to support creators.</h4>
-                <button id="upvote_button" class="button up-vote">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
-                        fill="#000000">
-                        <path d="M0 0h24v24H0z" fill="none" />
-                        <path
-                            d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                    </svg>
-                    <div id="like_count">Loading...</div>
-                </button>
-            </section>
+            </aside>
+            <main class="grid gap-2">
+                <section class="hero-section">
+                    <h1 id="article_title"></h1>
+                    <div class="flex align-center">
+                        <div class="flex flex-wrap">
+                            <time id="published_time" style="white-space: pre;"></time><time id="updated_time"></time>
+                        </div>
+                        <span class="bullet-point"></span><span id="reading_time" style="white-space: nowrap;"></span>
+                    </div>
+                </section>
+                <details id="article_map_accordion" class="hide-on-desktop">
+                    <summary class="space-between">
+                        <h4>In this article</h4>
+                        <svg class="icon down-arrow" xmlns="http://www.w3.org/2000/svg" height="24px"
+                            viewBox="0 0 24 24" width="24px" fill="#000000">
+                            <path d="M24 24H0V0h24v24z" fill="none" opacity=".87" />
+                            <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6-1.41-1.41z" />
+                        </svg>
+                    </summary>
+                </details>
+                <section id="article_body" class="grid"></section>
+                <section>
+                    <h4>Article by -</h4>
+                    <div id="article_contributors" class="flex"></div>
+                </section>
+            </main>
             <button id="go_to_top" class="floating-button hide" onclick="goToTop()">
                 <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
                     fill="#000000">
@@ -279,7 +296,7 @@
                 <p class="empty-state">No writers</p>
             </section>
         </article>
-    </main>
+    </div>
     <sm-popup id="sign_in_popup">
         <header slot="header" class="popup__header">
             <button class="popup__header__close" onclick="hidePopup()">
@@ -557,15 +574,25 @@
         <li class="request-card">
             <h4 class="request-card__title"></h4>
             <time class="request-card__time"></time>
-            <div class="flex gap-0-5">
-                <button class="button icon-only preview-button" title="Preview article">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
-                        fill="#000000">
-                        <path d="M0 0h24v24H0V0z" fill="none" />
-                        <path
-                            d="M12 6c3.79 0 7.17 2.13 8.82 5.5C19.17 14.87 15.79 17 12 17s-7.17-2.13-8.82-5.5C4.83 8.13 8.21 6 12 6m0-2C7 4 2.73 7.11 1 11.5 2.73 15.89 7 19 12 19s9.27-3.11 11-7.5C21.27 7.11 17 4 12 4zm0 5c1.38 0 2.5 1.12 2.5 2.5S13.38 14 12 14s-2.5-1.12-2.5-2.5S10.62 9 12 9m0-2c-2.48 0-4.5 2.02-4.5 4.5S9.52 16 12 16s4.5-2.02 4.5-4.5S14.48 7 12 7z" />
-                    </svg>
-                </button>
+            <div class="flex space-between align-center gap-0-5">
+                <div class="flex gap-0-5">
+                    <button class="icon-only preview-button" title="Preview article">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
+                            width="24px" fill="#000000">
+                            <path d="M0 0h24v24H0V0z" fill="none" />
+                            <path
+                                d="M12 6c3.79 0 7.17 2.13 8.82 5.5C19.17 14.87 15.79 17 12 17s-7.17-2.13-8.82-5.5C4.83 8.13 8.21 6 12 6m0-2C7 4 2.73 7.11 1 11.5 2.73 15.89 7 19 12 19s9.27-3.11 11-7.5C21.27 7.11 17 4 12 4zm0 5c1.38 0 2.5 1.12 2.5 2.5S13.38 14 12 14s-2.5-1.12-2.5-2.5S10.62 9 12 9m0-2c-2.48 0-4.5 2.02-4.5 4.5S9.52 16 12 16s4.5-2.02 4.5-4.5S14.48 7 12 7z" />
+                        </svg>
+                    </button>
+                    <button class="icon-only delete-request" title="Delete request">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
+                            width="24px" fill="#000000">
+                            <path d="M0 0h24v24H0V0z" fill="none" />
+                            <path
+                                d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z" />
+                        </svg>
+                    </button>
+                </div>
                 <button class="button button--primary publish-button">Publish</button>
             </div>
         </li>
@@ -908,22 +935,26 @@
                 case 'dashboard':
                     targetPage = 'dashboard'
                     await Promise.all([
-                        floCloudAPI.requestObjectData('admin'),
+                        floCloudAPI.requestObjectData('adminData'),
                         floCloudAPI.requestGeneralData('publishing_requests', {
                             callback: (d, e) => renderDashboard(d)
                         })
                     ])
+                    calculateVotes()
                     break;
             }
             if (pagesData.lastPage !== targetPage) {
                 if (targetPage === 'article') {
+                    mobileQuery.addListener(handleMobileChange)
+                    handleMobileChange(mobileQuery)
                     articleTitleObserver.observe(getRef('article_title'))
                 } else {
+                    mobileQuery.removeListener(handleMobileChange)
                     articleTitleObserver.disconnect()
                 }
             }
             if (pageId !== 'loading') {
-                document.querySelector('main').classList.remove('hide')
+                getRef('main').classList.remove('hide')
             }
             document.querySelectorAll('.page').forEach(page => page.classList.add('hide'))
             getRef(targetPage).classList.remove('hide')
@@ -1023,7 +1054,7 @@
     </script>
 
     <script>
-        const relativeTime = new RelativeTime();
+        const relativeTime = new RelativeTime({ style: 'narrow' });
         const render = {
             articleCard(details) {
                 const { uid: articleID, category, title, readTime, published } = details
@@ -1050,7 +1081,7 @@
             },
             requestCard(details) {
                 const { message: { articleID, category, title }, time, vectorClock } = details
-                if (!floGlobals.appObjects.adminData.publishedVc.hasOwnProperty(vectorClock)) {
+                if (!floGlobals.appObjects.adminData.publishedVc.hasOwnProperty(vectorClock) && !floGlobals.appObjects.adminData.rejectedVc.hasOwnProperty(vectorClock)) {
                     const clone = getRef('request_template').content.cloneNode(true).firstElementChild
                     clone.dataset.vc = vectorClock
                     clone.querySelector('.request-card__title').textContent = title
@@ -1147,13 +1178,26 @@
 
         const openedArticles = {}
         async function renderArticle(articleID, firstLoad = true) {
+            const frag = document.createDocumentFragment()
             const allArticles = await compactIDB.readData('appObjects', 'articlesContent')
-            const { title, published, readTime, contributors } = floGlobals.appObjects.rmTimes.articles[articleID]
+            const { title, published, readTime, contributors, updated } = floGlobals.appObjects.rmTimes.articles[articleID]
             getRef('article_title').textContent = title
-            getRef('published_time').textContent = getFormattedTime(published, 'date-only')
+            getRef('published_time').textContent = `Published ${getFormattedTime(published, 'date-only')}${updated ? ", " : ''}`
+            if (updated)
+                getRef('updated_time').textContent = `Updated ${relativeTime.from(updated)}`
             getRef('reading_time').textContent = `${readTime} Min read`
             getRef('article_body').innerHTML = allArticles[articleID]
-            const frag = document.createDocumentFragment()
+            getRef('article_body').querySelectorAll('h3').forEach(heading => {
+                const headingText = heading.textContent
+                const headingID = floCrypto.randString(8)
+                heading.id = headingID
+                frag.append(createElement('li', {
+                    innerHTML: `<button data-heading-id="${headingID}">${headingText}</button>`
+                }))
+            })
+            getRef('article_map_container').innerHTML = ''
+            getRef('article_map_container').append(frag)
+
             contributors.forEach(id => {
                 frag.append(createElement('a', {
                     textContent: floGlobals.appObjects.rmTimes.articleWriters.hasOwnProperty(id) ? floGlobals.appObjects.rmTimes.articleWriters[id].name : id,
@@ -1488,6 +1532,7 @@
             }
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
+                    if (getRef('go_to_top').classList.contains('hide')) return
                     animateTo(getRef('go_to_top'), [
                         {
                             transform: 'none',
@@ -1520,7 +1565,36 @@
         })
 
         function goToTop() {
-            window.scrollTo(0, 0)
+            getRef('article').scroll({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        let isMobile = false
+        const mobileQuery = window.matchMedia('(max-width: 40rem)')
+        function handleMobileChange(e) {
+            if (e.matches) {
+                // Mobile view
+                isMobile = true
+                const original = getRef('article_map').querySelector('#article_map_container')
+                if (original) {
+                    const clone = original.cloneNode(true)
+                    original.remove()
+                    getRef('article_map_accordion').append(clone)
+                }
+
+            } else {
+                // Desktop view
+                isMobile = false
+                const original = getRef('article_map_accordion').querySelector('#article_map_container')
+                if (original) {
+                    const clone = original.cloneNode(true)
+                    original.remove()
+                    getRef('article_map').append(clone)
+                }
+
+            }
         }
 
         function generateCredentials() {
@@ -1643,6 +1717,20 @@
                     textContent: title
                 }))
                 showPopup('preview_popup')
+            } else if (e.target.closest('.delete-request')) {
+                getConfirmation(`Delete this request?`).then(res => {
+                    if (res) {
+                        const button = e.target.closest('.delete-request');
+                        const vc = button.closest('.request-card').dataset.vc;
+                        floGlobals.appObjects.adminData.rejectedVc[vc] = true
+
+                        floCloudAPI.updateObjectData('adminData')
+                            .then(() => {
+                                notify(`Deleted request`, 'success')
+                                document.querySelector(`.request-card[data-vc="${vc}"]`).remove()
+                            })
+                    }
+                })
             }
         }
 
@@ -1710,7 +1798,6 @@
         }
 
         async function calculateVotes() {
-            await floCloudAPI.requestObjectData('adminData')
             const articlesVotesProm = []
             const articleIDs = []
             for (const articleKey in floGlobals.appObjects.rmTimes.articles) {
@@ -1890,15 +1977,13 @@
                     getRef('article_analytics').addEventListener('click', handleAnalyticsClick);
                     getRef('writers_list').addEventListener('click', handleWritersClick);
                     document.querySelectorAll('.admin-option').forEach(elem => elem.classList.remove('hide'));
-                    calculateVotes()
+                    location.hash = '#/dashboard'
                 } else {
                     getRef('publishing_requests').removeEventListener('click', handleRequestClick)
                     getRef('article_analytics').removeEventListener('click', handleAnalyticsClick);
                     getRef('writers_list').removeEventListener('click', handleWritersClick);
                     document.querySelectorAll('.admin-option').forEach(elem => elem.classList.add('hide'))
                 }
-                if (location.hash.includes('sign_in') || location.hash.includes('sign_up'))
-                    location.hash = floGlobals.isSubAdmin ? '#/dashboard' : '#/home'
                 console.log(result)
             }).catch(error => console.error(error))
         }
