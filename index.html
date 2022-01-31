@@ -237,9 +237,7 @@
                 <section class="hero-section">
                     <h1 id="article_title"></h1>
                     <div class="flex align-center">
-                        <div class="flex flex-wrap">
-                            <time id="published_time" style="white-space: pre;"></time><time id="updated_time"></time>
-                        </div>
+                        <time id="published_time"></time>
                         <span class="bullet-point"></span><span id="reading_time" style="white-space: nowrap;"></span>
                     </div>
                 </section>
@@ -273,6 +271,7 @@
                     <strip-option value="analytic" selected>Analytics</strip-option>
                     <strip-option value="request">Requests</strip-option>
                     <strip-option value="writers">Writers</strip-option>
+                    <strip-option value="cc">CC</strip-option>
                 </strip-select>
             </div>
             <section id="analytic_section" class="admin-section">
@@ -294,6 +293,23 @@
                 </button>
                 <ul id="writers_list" class="grid gap-1-5 observe-empty-state"></ul>
                 <p class="empty-state">No writers</p>
+            </section>
+            <section id="cc_section" class="admin-section hide grid gap-1-5">
+                <div class="grid gap-1-5">
+                    <div class="grid gap-0-5">
+                        <h4>Approve FLO IDs</h4>
+                        <p>Add FLO IDs that are allowed to submit article publishing requests from CC.</p>
+
+                    </div>
+                    <sm-form>
+                        <div class="flex">
+                            <sm-input id="get_id_to_add" placeholder="Add FLO IDs" class="w-100" required></sm-input>
+                            <sm-button variant="primary" onclick="addApprovedID()">Add</sm-button>
+                        </div>
+                    </sm-form>
+                </div>
+                <ul id="approved_ids" class="grid gap-0-5 observe-empty-state"></ul>
+                <p class="empty-state">No approved FLO IDs</p>
             </section>
         </article>
     </div>
@@ -626,6 +642,19 @@
                 <p class="writer-bio"></p>
             </div>
             <sm-copy class="writer-flo-id"></sm-copy>
+        </li>
+    </template>
+    <template id="flo_id_card_template">
+        <li class="flo-id-card flex align-center">
+            <div class="flo-id"></div>
+            <button class="icon-only delete-flo-id" title="Delete approved FLO ID">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                    fill="#000000">
+                    <path d="M0 0h24v24H0V0z" fill="none" />
+                    <path
+                        d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z" />
+                </svg>
+            </button>
         </li>
     </template>
 
@@ -1080,8 +1109,11 @@
                 return clone
             },
             requestCard(details) {
-                const { message: { articleID, category, title }, time, vectorClock } = details
-                if (!floGlobals.appObjects.adminData.publishedVc.hasOwnProperty(vectorClock) && !floGlobals.appObjects.adminData.rejectedVc.hasOwnProperty(vectorClock)) {
+                console.log(details)
+                const { senderID, message: { articleID, category, title }, time, vectorClock } = details
+                const { publishedVc, rejectedVc, approvedID } = floGlobals.appObjects.adminData
+                const shouldRender = approvedID.hasOwnProperty(senderID) && !publishedVc.hasOwnProperty(vectorClock) && !rejectedVc.hasOwnProperty(vectorClock)
+                if (shouldRender) {
                     const clone = getRef('request_template').content.cloneNode(true).firstElementChild
                     clone.dataset.vc = vectorClock
                     clone.querySelector('.request-card__title').textContent = title
@@ -1107,6 +1139,12 @@
                 clone.querySelector('.writer-name').textContent = name
                 clone.querySelector('.writer-bio').textContent = bio
                 clone.querySelector('.writer-flo-id').setAttribute('value', writerID)
+                return clone
+            },
+            floIDCard(floID) {
+                const clone = getRef('flo_id_card_template').content.cloneNode(true).firstElementChild
+                clone.dataset.floId = floID
+                clone.querySelector('.flo-id').textContent = floID
                 return clone
             },
         }
@@ -1182,17 +1220,15 @@
             const allArticles = await compactIDB.readData('appObjects', 'articlesContent')
             const { title, published, readTime, contributors, updated } = floGlobals.appObjects.rmTimes.articles[articleID]
             getRef('article_title').textContent = title
-            getRef('published_time').textContent = `Published ${getFormattedTime(published, 'date-only')}${updated ? ", " : ''}`
-            if (updated)
-                getRef('updated_time').textContent = `Updated ${relativeTime.from(updated)}`
+            getRef('published_time').textContent = `Published ${getFormattedTime(published, 'date-only')}${updated ? `, Updated ${relativeTime.from(updated)}` : ''}`
             getRef('reading_time').textContent = `${readTime} Min read`
             getRef('article_body').innerHTML = allArticles[articleID]
             getRef('article_body').querySelectorAll('h3').forEach(heading => {
                 const headingText = heading.textContent
-                const headingID = floCrypto.randString(8)
+                const headingID = `s${floCrypto.randString(8)}`
                 heading.id = headingID
                 frag.append(createElement('li', {
-                    innerHTML: `<button data-heading-id="${headingID}">${headingText}</button>`
+                    innerHTML: `<button class="heading-shortcut" data-heading-id="${headingID}">${headingText}</button>`
                 }))
             })
             getRef('article_map_container').innerHTML = ''
@@ -1499,6 +1535,16 @@
                     tempCount.remove()
                 }
         }
+        getRef('article').addEventListener('click', (e) => {
+            if (e.target.closest('.heading-shortcut')) {
+                const button = e.target.closest('.heading-shortcut');
+                const headingID = button.dataset.headingId;
+                const heading = getRef('article_body').querySelector(`#${headingID}`)
+                heading.scrollIntoView({
+                    behavior: 'smooth'
+                })
+            }
+        })
         getRef('upvote_button').addEventListener('click', debounce(() => {
             if (typeof myFloID !== 'undefined') {
                 floCloudAPI.sendGeneralData({
@@ -1633,23 +1679,26 @@
                 if (card)
                     frag.prepend(card)
             }
-            floCloudAPI.updateObjectData('adminData')
             getRef('publishing_requests').innerHTML = ''
             getRef('publishing_requests').append(frag)
 
             for (const articleKey in floGlobals.appObjects.rmTimes.articles) {
-                const card = render.articleRow(articleKey)
-                frag.prepend(card)
+                frag.prepend(render.articleRow(articleKey))
             }
             getRef('article_analytics').innerHTML = ''
             getRef('article_analytics').append(frag)
 
             for (const articleKey in floGlobals.appObjects.rmTimes.articleWriters) {
-                const card = render.writerCard(articleKey)
-                frag.prepend(card)
+                frag.prepend(render.writerCard(articleKey))
             }
             getRef('writers_list').innerHTML = ''
             getRef('writers_list').append(frag)
+
+            for (const floID in floGlobals.appObjects.adminData.approvedID) {
+                frag.prepend(render.floIDCard(floID))
+            }
+            getRef('approved_ids').innerHTML = ''
+            getRef('approved_ids').append(frag)
         }
 
         function publishArticle(vc) {
@@ -1932,6 +1981,47 @@
         }
 
 
+        function addApprovedID() {
+            getConfirmation('Approve FLO ID?').then(res => {
+                if (res) {
+                    const idToAdd = getRef('get_id_to_add').value.trim()
+                    const validIds = idToAdd.split(',').filter(floID => {
+                        return (floCrypto.validateAddr(floID) && !floGlobals.appObjects.adminData.approvedID.hasOwnProperty(floID))
+                    })
+                    if (validIds.length) {
+                        const frag = document.createDocumentFragment()
+                        validIds.forEach(floID => {
+                            floGlobals.appObjects.adminData.approvedID[floID] = true
+                            frag.append(render.floIDCard(floID))
+                        })
+                        getRef('approved_ids').prepend(frag)
+                        floCloudAPI.updateObjectData('adminData').then(() => {
+                            notify('Approved FLO IDs', 'success')
+                        }).catch(error => console.error(error))
+                    } else {
+                        notify('Given FLO IDs are already added', 'error')
+                    }
+                    getRef('get_id_to_add').value = ''
+                }
+            })
+        }
+
+        function handleApprovedIDsClick(e) {
+            if (e.target.closest('.delete-flo-id')) {
+                const floIdCard = e.target.closest('.flo-id-card');
+                const floID = floIdCard.dataset.floId;
+                getConfirmation('Remove this FLO ID from approved list?').then(res => {
+                    if (res) {
+                        delete floGlobals.appObjects.adminData.approvedID[floID]
+                        floIdCard.remove()
+                        floCloudAPI.updateObjectData('adminData').then(() => {
+                            notify('Removed FLO ID', 'success')
+                        }).catch(error => console.error(error))
+                    }
+                })
+            }
+        }
+
         function getSignedIn() {
             return new Promise((resolve, reject) => {
                 getRef('sign_in_button').onclick = () => {
@@ -1976,12 +2066,14 @@
                     getRef('publishing_requests').addEventListener('click', handleRequestClick);
                     getRef('article_analytics').addEventListener('click', handleAnalyticsClick);
                     getRef('writers_list').addEventListener('click', handleWritersClick);
+                    getRef('approved_ids').addEventListener('click', handleApprovedIDsClick);
                     document.querySelectorAll('.admin-option').forEach(elem => elem.classList.remove('hide'));
                     location.hash = '#/dashboard'
                 } else {
                     getRef('publishing_requests').removeEventListener('click', handleRequestClick)
                     getRef('article_analytics').removeEventListener('click', handleAnalyticsClick);
                     getRef('writers_list').removeEventListener('click', handleWritersClick);
+                    getRef('approved_ids').removeEventListener('click', handleApprovedIDsClick);
                     document.querySelectorAll('.admin-option').forEach(elem => elem.classList.add('hide'))
                 }
                 console.log(result)
