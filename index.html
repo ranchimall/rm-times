@@ -234,13 +234,14 @@
                 </div>
             </aside>
             <main class="grid gap-2">
-                <section class="hero-section">
+                <header class="hero-section">
                     <h1 id="article_title"></h1>
+                    <p id="article_summary"></p>
                     <div class="flex align-center">
                         <time id="published_time"></time>
                         <span class="bullet-point"></span><span id="reading_time" style="white-space: nowrap;"></span>
                     </div>
-                </section>
+                </header>
                 <details id="article_map_accordion" class="hide-on-desktop">
                     <summary class="space-between">
                         <h4>In this article</h4>
@@ -538,27 +539,27 @@
     </sm-popup>
     <template id="trending_article_template">
         <div class="trending-article grid gap-0-5">
-            <a href="" class="article-card__category"></a>
             <a class="article-card--highlight grid gap-0-5" href="" style="color: inherit">
                 <h3 class="trending-article__title"></h3>
-                <div class="flex">
-                    <span class="trending-article__read-time h5"></span><span class="bullet-point"></span><time
-                        class="trending-article__published h5"></time>
-                </div>
                 <p class="trending-article__summary"></p>
             </a>
+            <div class="flex align-center" style="margin-top: 0.3rem;">
+                <a href="" class="article-card__category interact"></a>
+                <span class="trending-article__read-time h5"></span><span class="bullet-point"></span><time
+                    class="trending-article__published h5"></time>
+            </div>
         </div>
     </template>
     <template id="article_card_template">
         <li class="article-card grid">
-            <a href="" class="article-card__category interact"></a>
             <a href="" class="grid article-link">
                 <h4 class="article-card__title"></h4>
-                <div class="flex">
-                    <span class="article-card__read-time"></span><span class="bullet-point"></span>
-                    <time class="article-card__published"></time>
-                </div>
             </a>
+            <div class="flex align-center" style="margin-top: 0.3rem;">
+                <a href="" class="article-card__category interact"></a>
+                <span class="article-card__read-time"></span><span class="bullet-point"></span>
+                <time class="article-card__published"></time>
+            </div>
         </li>
     </template>
     <template id="article_row_template">
@@ -759,11 +760,6 @@
         }
 
         document.addEventListener('popupopened', e => {
-            // switch (e.target.id) {
-            //     case 'preview_popup':
-            //         getRef('preview_container').innerHTML = ''
-            //         break;
-            // }
         })
         document.addEventListener('popupclosed', e => {
             zIndex--
@@ -1218,11 +1214,12 @@
         async function renderArticle(articleID, firstLoad = true) {
             const frag = document.createDocumentFragment()
             const allArticles = await compactIDB.readData('appObjects', 'articlesContent')
-            const { title, published, readTime, contributors, updated } = floGlobals.appObjects.rmTimes.articles[articleID]
+            const { title, published, readTime, contributors, updated, summary } = floGlobals.appObjects.rmTimes.articles[articleID]
             getRef('article_title').textContent = title
+            getRef('article_summary').textContent = summary
             getRef('published_time').textContent = `Published ${getFormattedTime(published, 'date-only')}${updated ? `, Updated ${relativeTime.from(updated)}` : ''}`
             getRef('reading_time').textContent = `${readTime} Min read`
-            getRef('article_body').innerHTML = allArticles[articleID]
+            getRef('article_body').innerHTML = DOMPurify.sanitize(allArticles[articleID])
             getRef('article_body').querySelectorAll('h3').forEach(heading => {
                 const headingText = heading.textContent
                 const headingID = `s${floCrypto.randString(8)}`
