@@ -117,6 +117,13 @@ button,
   color: rgba(var(--background-color), 1);
 }
 
+.cta {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 .icon-only {
   padding: 0.5rem;
   border-radius: 0.3rem;
@@ -569,7 +576,6 @@ sm-copy {
 }
 
 #main {
-  overflow-y: hidden;
   display: grid;
   height: 100%;
   grid-template-rows: auto 1fr;
@@ -647,29 +653,30 @@ theme-toggle {
   padding: 0.8rem 0.5rem;
   color: inherit;
   font-size: 0.8rem;
-  white-space: nowrap;
   flex-shrink: 0;
   align-items: center;
   border-radius: 0.5rem;
-  min-width: 4rem;
+  width: 5rem;
+  text-align: center;
   background-color: rgba(var(--text-color), 0.02);
 }
 .category .icon {
+  margin-bottom: 1rem;
   transition: transform 0.3s;
 }
 .category:hover .icon {
   transform: scale(1.3);
   fill: var(--accent-color);
 }
-.category span {
-  margin-top: 0.5rem;
+.category div {
+  margin-top: auto;
 }
 
 #query_results_list,
 #written_article_list {
   margin: 1rem 0;
   padding-bottom: 2rem;
-  gap: 1.6rem;
+  gap: 2rem;
 }
 
 .article-card {
@@ -685,9 +692,9 @@ theme-toggle {
   line-height: 1.4;
 }
 .article-card__category {
-  border: solid thin rgba(var(--text-color), 0.3);
+  border: solid thin rgba(var(--text-color), 0.5);
   margin-right: 0.5rem;
-  border-radius: 1rem;
+  border-radius: 0.3rem;
   font-size: 0.8rem;
   padding: 0.3rem 0.6rem;
   font-weight: 700;
@@ -719,6 +726,7 @@ theme-toggle {
 }
 
 #explore {
+  align-items: flex-start;
   padding-top: 1.5rem;
 }
 
@@ -900,12 +908,6 @@ theme-toggle {
 .request-card .flex {
   grid-row: span 2;
   margin-top: 0.5rem;
-}
-.request-card .publish-button {
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 0.8rem;
-  font-weight: 700;
 }
 
 .article-row {
