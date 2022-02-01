@@ -1215,6 +1215,16 @@
             getRef('latest_articles_list').append(frag)
         }
 
+        const headingObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const allShortcuts = [...getRef('article_map_container').querySelectorAll('.heading-shortcut')]
+                    allShortcuts.forEach(elem => elem.classList.remove('active'))
+                    allShortcuts.find(elem => elem.dataset.headingId === entry.target.previousElementSibling.id).classList.add('active')
+                }
+            })
+        })
+
         const openedArticles = {}
         async function renderArticle(articleID, firstLoad = true) {
             const frag = document.createDocumentFragment()
@@ -1225,7 +1235,8 @@
             getRef('published_time').textContent = `Published ${getFormattedTime(published, 'date-only')}${updated ? `, Updated ${relativeTime.from(updated)}` : ''}`
             getRef('reading_time').textContent = `${readTime} Min read`
             getRef('article_body').innerHTML = DOMPurify.sanitize(allArticles[articleID])
-            getRef('article_body').querySelectorAll('h3').forEach(heading => {
+            const allHeadings = getRef('article_body').querySelectorAll('h3')
+            allHeadings.forEach(heading => {
                 const headingText = heading.textContent
                 const headingID = `s${floCrypto.randString(8)}`
                 heading.id = headingID
@@ -1235,6 +1246,9 @@
             })
             getRef('article_map_container').innerHTML = ''
             getRef('article_map_container').append(frag)
+            allHeadings.forEach(heading => {
+                headingObserver.observe(heading.nextElementSibling)
+            })
 
             contributors.forEach(id => {
                 frag.append(createElement('a', {
