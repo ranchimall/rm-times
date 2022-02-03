@@ -632,9 +632,6 @@ theme-toggle {
       fill: var(--accent-color);
     }
   }
-  div {
-    margin-top: auto;
-  }
 }
 
 #query_results_list,
@@ -747,11 +744,6 @@ theme-toggle {
     font-weight: 500;
     font-size: 0.9rem;
     color: rgba(var(--text-color), 0.8);
-  }
-}
-.heading-shortcut {
-  &.active {
-    color: var(--accent-color) !important;
   }
 }
 .hero-section {
@@ -1117,6 +1109,11 @@ theme-toggle {
   }
   #article_map_container {
     margin-bottom: 3rem;
+  }
+  .heading-shortcut {
+    &.active {
+      color: var(--accent-color) !important;
+    }
   }
 
   #action_panel {

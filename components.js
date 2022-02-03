@@ -864,7 +864,8 @@ smNotifications.innerHTML = `
     }
 </style>
 <div class="notification-panel"></div>
-`
+`;
+
 
 customElements.define('sm-notifications', class extends HTMLElement {
     constructor() {

@@ -544,7 +544,7 @@
         </div>
     </template>
     <template id="article_card_template">
-        <li class="article-card grid">
+        <li class="article-card grid" draggable="true">
             <a href="" class="grid article-link">
                 <h4 class="article-card__title"></h4>
             </a>
@@ -667,7 +667,6 @@
     <script id="ui_utils">
         // Global letiables
         const domRefs = {};
-        let timerId;
         const currentYear = new Date().getFullYear();
 
         //Checks for internet connection status
@@ -847,6 +846,16 @@
                 return time;
             }
         }
+        // implement event delegation
+        function delegate(el, event, selector, fn) {
+            el.addEventListener(event, function (e) {
+                const potentialTarget = e.target.closest(selector)
+                if (potentialTarget) {
+                    e.delegateTarget = potentialTarget
+                    fn.call(this, e)
+                }
+            })
+        }
 
         window.addEventListener('hashchange', e => showPage(window.location.hash))
         window.addEventListener("load", () => {
@@ -936,19 +945,19 @@
                 case 'home':
                 case 'main_page':
                     targetPage = 'main_page'
-                    renderHomepage()
+                    render.homepage()
                     break;
                 case 'article':
                     targetPage = 'article'
-                    await renderArticle(params.articleID)
+                    await render.article(params.articleID)
                     break;
                 case 'explore':
                     targetPage = 'explore'
-                    renderExplorePage(params)
+                    render.explorePage(params)
                     break;
                 case 'writer':
                     targetPage = 'writer'
-                    renderWriterPage(params)
+                    render.writerPage(params)
                     break;
                 case 'dashboard':
                     targetPage = 'dashboard'
@@ -961,15 +970,16 @@
                     calculateVotes()
                     break;
             }
-            if (pagesData.lastPage !== targetPage) {
-                if (targetPage === 'article') {
-                    mobileQuery.addListener(handleMobileChange)
-                    handleMobileChange(mobileQuery)
-                    articleTitleObserver.observe(getRef('article_title'))
-                } else {
-                    mobileQuery.removeListener(handleMobileChange)
-                    articleTitleObserver.disconnect()
-                }
+            if (targetPage === 'article') {
+                setTimeout(() => {
+                    getRef('article').scroll({ top: 0 })
+                }, 0)
+                handleMobileChange(mobileQuery)
+                mobileQuery.addListener(handleMobileChange)
+                articleTitleObserver.observe(getRef('article_title'))
+            } else {
+                mobileQuery.removeListener(handleMobileChange)
+                articleTitleObserver.disconnect()
             }
             if (pageId !== 'loading') {
                 getRef('main').classList.remove('hide')
@@ -1072,6 +1082,7 @@
     </script>
 
     <script>
+        const openedArticles = {}
         const relativeTime = new RelativeTime({ style: 'narrow' });
         const render = {
             articleCard(details) {
@@ -1136,17 +1147,135 @@
                 clone.querySelector('.flo-id').textContent = floID
                 return clone
             },
+            homepage() {
+                const frag = document.createDocumentFragment()
+                // Render article topics
+                categories.forEach(({ title, icon }) => frag.append(createElement('a', {
+                    attributes: { href: `#/explore?type=category&query=${title.toLowerCase()}` },
+                    className: 'category interact',
+                    innerHTML: `${icon}<div>${title}</div>`,
+                })))
+                getRef('news_categories_list').innerHTML = ''
+                getRef('news_categories_list').append(frag)
+                const arrOfArticles = getArrayOfObj(floGlobals.appObjects.rmTimes.articles)
+                // Render trending article card
+                let sortedByVotes = arrOfArticles.sort((a, b) => b.votes - a.votes)
+                sortedByVotes.slice(0, 3).forEach(articleDetail => frag.append(render.trendingArticleCard(articleDetail)))
+                getRef('trending_article_container').innerHTML = ''
+                getRef('trending_article_container').append(frag)
+                // render latest articles
+                const sortedArticles = sortedByVotes.slice(3).sort((a, b) => b.published - a.published)
+                sortedArticles.forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
+                getRef('latest_articles_list').innerHTML = ''
+                getRef('latest_articles_list').append(frag)
+            },
+            async article(articleID, firstLoad = true) {
+                const frag = document.createDocumentFragment()
+                const allArticles = await compactIDB.readData('appObjects', 'articlesContent')
+                const { title, published, readTime, contributors, updated, summary } = floGlobals.appObjects.rmTimes.articles[articleID]
+                getRef('article_title').textContent = title
+                getRef('article_summary').textContent = summary
+                getRef('published_time').textContent = `${getFormattedTime(published, 'date-only')}${updated ? `, Updated ${relativeTime.from(updated)}` : ''}`
+                getRef('reading_time').textContent = `${readTime} Min read`
+                getRef('article_body').innerHTML = DOMPurify.sanitize(allArticles[articleID])
+                const allHeadings = getRef('article_body').querySelectorAll('h3')
+                allHeadings.forEach(heading => {
+                    const headingText = heading.textContent
+                    const headingID = `s${floCrypto.randString(8)}`
+                    heading.id = headingID
+                    frag.append(createElement('li', {
+                        innerHTML: `<button class="heading-shortcut" data-heading-id="${headingID}">${headingText}</button>`
+                    }))
+                })
+                getRef('article').querySelector('#article_map_container').innerHTML = ''
+                getRef('article').querySelector('#article_map_container').append(frag)
+                allHeadings.forEach(heading => {
+                    headingObserver.observe(heading.nextElementSibling)
+                })
+
+                contributors.forEach(id => {
+                    frag.append(createElement('a', {
+                        textContent: floGlobals.appObjects.rmTimes.articleWriters.hasOwnProperty(id) ? floGlobals.appObjects.rmTimes.articleWriters[id].name : id,
+                        className: 'contributor',
+                        attributes: { 'href': `#/writer?id=${id}` }
+                    }))
+                })
+                getRef('article_contributors').innerHTML = ''
+                getRef('article_contributors').append(frag)
+                getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
+                // implement live voting
+                if (!openedArticles.hasOwnProperty(articleID)) {
+                    floCloudAPI.requestGeneralData(`article_${articleID}_votes`, {
+                        lowerVectorClock: floGlobals.appObjects.rmTimes.articles[articleID].lastCountedVC + 1,
+                        callback: (allVotes, e) => {
+                            if (firstLoad) {
+                                for (const vote in allVotes) {
+                                    floGlobals.appObjects.rmTimes.articles[articleID].votes += allVotes[vote].message.voteCount || 1
+                                }
+                                getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
+                            } else {
+                                for (const msg in allVotes) {
+                                    animateLikeCount(allVotes[msg].message.voteCount, articleID)
+                                }
+                            }
+                            firstLoad = false
+                        }
+                    })
+                    openedArticles[articleID] = true
+                } else {
+                    getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
+                }
+            },
+            explorePage() {
+                const { type, query } = params
+                const frag = document.createDocumentFragment()
+                const sortedByTime = getArrayOfObj(floGlobals.appObjects.rmTimes.articles).sort((a, b) => b.published - a.published)
+                if (type === 'recent') {
+                    sortedByTime.forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
+                } else {
+                    const options = (type === 'category') ? { keys: ['category'], threshold: 0 } : { keys: ['title', 'category', 'tags'], threshold: 0.3 }
+                    const fuse = new Fuse(sortedByTime, options)
+                    const searchResult = fuse.search(query).map(v => v.item)
+                    searchResult.forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
+                    getRef('explore_heading').textContent = `${type === 'category' ? 'Explore' : 'Related to'} ${query}`
+                }
+                getRef('query_results_list').innerHTML = ''
+                getRef('query_results_list').append(frag)
+            },
+            writerPage() {
+                if (floGlobals.appObjects.rmTimes.articleWriters.hasOwnProperty(params.id)) {
+                    const { name, bio } = floGlobals.appObjects.rmTimes.articleWriters[params.id]
+                    getRef('writer_initials').textContent = name[0]
+                    getRef('writer_name').textContent = name
+                    getRef('writer_bio').textContent = bio
+                } else {
+                    getRef('writer_initials').textContent = 'F'
+                    getRef('writer_name').textContent = ''
+                    getRef('writer_bio').textContent = ''
+                }
+                getRef('writer_id').value = params.id
+                const frag = document.createDocumentFragment()
+                const sortedByTime = getArrayOfObj(floGlobals.appObjects.rmTimes.articles).sort((a, b) => b.published - a.published)
+                const options = { keys: ['contributors'], threshold: 0 }
+                const fuse = new Fuse(sortedByTime, options)
+                const searchResult = fuse.search(params.id).map(v => v.item)
+                searchResult.forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
+                getRef('written_article_list').innerHTML = ''
+                getRef('written_article_list').append(frag)
+            },
         }
 
         const getArticles = async () => {
-            await Promise.all([
+            Promise.all([
                 floCloudAPI.requestObjectData('rmTimes'),
                 floCloudAPI.requestObjectData('articlesContent'),
-            ])
-            delete floGlobals.appObjects.articlesContent
-            showPage(window.location.hash, { firstLoad: true })
+            ]).then(() => {
+                delete floGlobals.appObjects.articlesContent
+                showPage(window.location.hash, { firstLoad: true })
+            })
         }
 
+        // Create array of objects from object of objects
         function getArrayOfObj(obj) {
             const arr = []
             for (const key in obj) {
@@ -1192,135 +1321,17 @@
                 icon: `<svg class="icon" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><g><rect fill="none" height="24" width="24"/></g><g><path d="M19.93,8.35l-3.6,1.68L14,7.7V6.3l2.33-2.33l3.6,1.68c0.38,0.18,0.82,0.01,1-0.36c0.18-0.38,0.01-0.82-0.36-1l-3.92-1.83 c-0.38-0.18-0.83-0.1-1.13,0.2L13.78,4.4C13.6,4.16,13.32,4,13,4c-0.55,0-1,0.45-1,1v1H8.82C8.4,4.84,7.3,4,6,4C4.34,4,3,5.34,3,7 c0,1.1,0.6,2.05,1.48,2.58L7.08,18H6c-1.1,0-2,0.9-2,2v1h13v-1c0-1.1-0.9-2-2-2h-1.62L8.41,8.77C8.58,8.53,8.72,8.28,8.82,8H12v1 c0,0.55,0.45,1,1,1c0.32,0,0.6-0.16,0.78-0.4l1.74,1.74c0.3,0.3,0.75,0.38,1.13,0.2l3.92-1.83c0.38-0.18,0.54-0.62,0.36-1 C20.75,8.34,20.31,8.17,19.93,8.35z M6,8C5.45,8,5,7.55,5,7c0-0.55,0.45-1,1-1s1,0.45,1,1C7,7.55,6.55,8,6,8z M11.11,18H9.17 l-2.46-8h0.1L11.11,18z"/></g></svg>`
             }
         ]
-        function renderHomepage() {
-            const frag = document.createDocumentFragment()
-            // Render article topics
-            categories.forEach(({ title, icon }) => frag.append(createElement('a', {
-                attributes: { href: `#/explore?type=category&query=${title.toLowerCase()}` },
-                className: 'category interact',
-                innerHTML: `${icon}<div>${title}</div>`,
-            })))
-            getRef('news_categories_list').innerHTML = ''
-            getRef('news_categories_list').append(frag)
-            const arrOfArticles = getArrayOfObj(floGlobals.appObjects.rmTimes.articles)
-            // Render trending article card
-            let sortedByVotes = arrOfArticles.sort((a, b) => b.votes - a.votes)
-            sortedByVotes.slice(0, 3).forEach(articleDetail => frag.append(render.trendingArticleCard(articleDetail)))
-            getRef('trending_article_container').innerHTML = ''
-            getRef('trending_article_container').append(frag)
-            // render latest articles
-            const sortedArticles = sortedByVotes.slice(3).sort((a, b) => b.published - a.published)
-            sortedArticles.forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
-            getRef('latest_articles_list').innerHTML = ''
-            getRef('latest_articles_list').append(frag)
-        }
 
         const headingObserver = new IntersectionObserver(entries => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    const allShortcuts = [...getRef('article_map_container').querySelectorAll('.heading-shortcut')]
+                    const allShortcuts = [...getRef('article').querySelectorAll('.heading-shortcut')]
                     allShortcuts.forEach(elem => elem.classList.remove('active'))
                     allShortcuts.find(elem => elem.dataset.headingId === entry.target.previousElementSibling.id).classList.add('active')
                 }
             })
         })
 
-        const openedArticles = {}
-        async function renderArticle(articleID, firstLoad = true) {
-            const frag = document.createDocumentFragment()
-            const allArticles = await compactIDB.readData('appObjects', 'articlesContent')
-            const { title, published, readTime, contributors, updated, summary } = floGlobals.appObjects.rmTimes.articles[articleID]
-            getRef('article_title').textContent = title
-            getRef('article_summary').textContent = summary
-            getRef('published_time').textContent = `Published ${getFormattedTime(published, 'date-only')}${updated ? `, Updated ${relativeTime.from(updated)}` : ''}`
-            getRef('reading_time').textContent = `${readTime} Min read`
-            getRef('article_body').innerHTML = DOMPurify.sanitize(allArticles[articleID])
-            const allHeadings = getRef('article_body').querySelectorAll('h3')
-            allHeadings.forEach(heading => {
-                const headingText = heading.textContent
-                const headingID = `s${floCrypto.randString(8)}`
-                heading.id = headingID
-                frag.append(createElement('li', {
-                    innerHTML: `<button class="heading-shortcut" data-heading-id="${headingID}">${headingText}</button>`
-                }))
-            })
-            getRef('article_map_container').innerHTML = ''
-            getRef('article_map_container').append(frag)
-            allHeadings.forEach(heading => {
-                headingObserver.observe(heading.nextElementSibling)
-            })
-
-            contributors.forEach(id => {
-                frag.append(createElement('a', {
-                    textContent: floGlobals.appObjects.rmTimes.articleWriters.hasOwnProperty(id) ? floGlobals.appObjects.rmTimes.articleWriters[id].name : id,
-                    className: 'contributor',
-                    attributes: { 'href': `#/writer?id=${id}` }
-                }))
-            })
-            getRef('article_contributors').innerHTML = ''
-            getRef('article_contributors').append(frag)
-            getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
-            // implement live voting
-            if (!openedArticles.hasOwnProperty(articleID)) {
-                floCloudAPI.requestGeneralData(`article_${articleID}_votes`, {
-                    lowerVectorClock: floGlobals.appObjects.rmTimes.articles[articleID].lastCountedVC + 1,
-                    callback: (allVotes, e) => {
-                        if (firstLoad) {
-                            for (const vote in allVotes) {
-                                floGlobals.appObjects.rmTimes.articles[articleID].votes += allVotes[vote].message.voteCount || 1
-                            }
-                            getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
-                        } else {
-                            for (const msg in allVotes) {
-                                animateLikeCount(allVotes[msg].message.voteCount, articleID)
-                            }
-                        }
-                        firstLoad = false
-                    }
-                })
-                openedArticles[articleID] = true
-            } else {
-                getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
-            }
-        }
-
-        function renderExplorePage(params) {
-            const { type, query } = params
-            const frag = document.createDocumentFragment()
-            const sortedByTime = getArrayOfObj(floGlobals.appObjects.rmTimes.articles).sort((a, b) => b.published - a.published)
-            if (type === 'recent') {
-                sortedByTime.forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
-            } else {
-                const options = (type === 'category') ? { keys: ['category'], threshold: 0 } : { keys: ['title', 'category', 'tags'], threshold: 0.3 }
-                const fuse = new Fuse(sortedByTime, options)
-                const searchResult = fuse.search(query).map(v => v.item)
-                searchResult.forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
-                getRef('explore_heading').textContent = `${type === 'category' ? 'Explore' : 'Related to'} ${query}`
-            }
-            getRef('query_results_list').innerHTML = ''
-            getRef('query_results_list').append(frag)
-        }
-        function renderWriterPage(params) {
-            if (floGlobals.appObjects.rmTimes.articleWriters.hasOwnProperty(params.id)) {
-                const { name, bio } = floGlobals.appObjects.rmTimes.articleWriters[params.id]
-                getRef('writer_initials').textContent = name[0]
-                getRef('writer_name').textContent = name
-                getRef('writer_bio').textContent = bio
-            } else {
-                getRef('writer_initials').textContent = 'F'
-                getRef('writer_name').textContent = ''
-                getRef('writer_bio').textContent = ''
-            }
-            getRef('writer_id').value = params.id
-            const frag = document.createDocumentFragment()
-            const sortedByTime = getArrayOfObj(floGlobals.appObjects.rmTimes.articles).sort((a, b) => b.published - a.published)
-            const options = { keys: ['contributors'], threshold: 0 }
-            const fuse = new Fuse(sortedByTime, options)
-            const searchResult = fuse.search(params.id).map(v => v.item)
-            searchResult.forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
-            getRef('written_article_list').innerHTML = ''
-            getRef('written_article_list').append(frag)
-        }
 
         let isSearchOn = false
         function toggleSearch() {
@@ -1426,13 +1437,10 @@
                 toggleSearch()
             }
         })
-        getRef('search_suggestions').addEventListener('click', e => {
-            if (e.target.closest('.search-suggestion')) {
-                getRef('search_articles').value = ''
-                toggleSearch()
-            }
+        delegate(getRef('search_suggestions'), 'click', '.search-suggestion', e => {
+            getRef('search_articles').value = ''
+            toggleSearch()
         })
-
         const slideInLeft = [
             {
                 opacity: 0,
@@ -1551,15 +1559,13 @@
                     tempCount.remove()
                 }
         }
-        getRef('article').addEventListener('click', (e) => {
-            if (e.target.closest('.heading-shortcut')) {
-                const button = e.target.closest('.heading-shortcut');
-                const headingID = button.dataset.headingId;
-                const heading = getRef('article_body').querySelector(`#${headingID}`)
-                heading.scrollIntoView({
-                    behavior: 'smooth'
-                })
-            }
+        delegate(getRef('article'), 'click', '.heading-shortcut', (e) => {
+            const button = e.target.closest('.heading-shortcut');
+            const headingID = button.dataset.headingId;
+            const heading = getRef('article_body').querySelector(`#${headingID}`)
+            heading.scrollIntoView({
+                behavior: 'smooth'
+            })
         })
         getRef('upvote_button').addEventListener('click', debounce(() => {
             if (typeof myFloID !== 'undefined') {
@@ -1639,6 +1645,7 @@
             if (e.matches) {
                 // Mobile view
                 isMobile = true
+                // move article key points 
                 const original = getRef('article_map').querySelector('#article_map_container')
                 if (original) {
                     const clone = original.cloneNode(true)
@@ -1649,13 +1656,21 @@
             } else {
                 // Desktop view
                 isMobile = false
-                const original = getRef('article_map_accordion').querySelector('#article_map_container')
-                if (original) {
-                    const clone = original.cloneNode(true)
-                    original.remove()
-                    getRef('article_map').append(clone)
+                if (pagesData.lastPage === 'article') {
+                    const original = getRef('article_map_accordion').querySelector('#article_map_container')
+                    if (original) {
+                        const clone = original.cloneNode(true)
+                        original.remove()
+                        getRef('article_map').append(clone)
+                    }
                 }
 
+            }
+            if (pagesData.lastPage === 'article') {
+                const allHeadings = getRef('article_body').querySelectorAll('h3')
+                allHeadings.forEach(heading => {
+                    headingObserver.observe(heading.nextElementSibling)
+                })
             }
         }
 
@@ -1765,7 +1780,6 @@
                 }
             })
         }
-
         function handleRequestClick(e) {
             if (e.target.closest('.publish-button')) {
                 const button = e.target.closest('.publish-button');
