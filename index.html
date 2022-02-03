@@ -974,8 +974,8 @@
                 setTimeout(() => {
                     getRef('article').scroll({ top: 0 })
                 }, 0)
-                handleMobileChange(mobileQuery)
                 mobileQuery.addListener(handleMobileChange)
+                handleMobileChange(mobileQuery)
                 articleTitleObserver.observe(getRef('article_title'))
             } else {
                 mobileQuery.removeListener(handleMobileChange)
@@ -1293,11 +1293,11 @@
                 icon: `<svg class="icon" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><g><rect fill="none" height="24" width="24"/></g><g><g><g><g><path d="M12,22C6.49,22,2,17.51,2,12S6.49,2,12,2s10,4.04,10,9c0,3.31-2.69,6-6,6h-1.77c-0.28,0-0.5,0.22-0.5,0.5 c0,0.12,0.05,0.23,0.13,0.33c0.41,0.47,0.64,1.06,0.64,1.67C14.5,20.88,13.38,22,12,22z M12,4c-4.41,0-8,3.59-8,8s3.59,8,8,8 c0.28,0,0.5-0.22,0.5-0.5c0-0.16-0.08-0.28-0.14-0.35c-0.41-0.46-0.63-1.05-0.63-1.65c0-1.38,1.12-2.5,2.5-2.5H16 c2.21,0,4-1.79,4-4C20,7.14,16.41,4,12,4z"/><circle cx="6.5" cy="11.5" r="1.5"/><circle cx="9.5" cy="7.5" r="1.5"/><circle cx="14.5" cy="7.5" r="1.5"/><circle cx="17.5" cy="11.5" r="1.5"/></g></g></g></g></svg>`
             },
             {
-                title: 'Biography',
+                title: 'People & Biography',
                 icon: `<svg class="icon" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><g><rect fill="none" height="24" width="24" x="0"/></g><g><path d="M22.47,5.2C22,4.96,21.51,4.76,21,4.59v12.03C19.86,16.21,18.69,16,17.5,16c-1.9,0-3.78,0.54-5.5,1.58V5.48 C10.38,4.55,8.51,4,6.5,4C4.71,4,3.02,4.44,1.53,5.2C1.2,5.36,1,5.71,1,6.08v12.08c0,0.58,0.47,0.99,1,0.99 c0.16,0,0.32-0.04,0.48-0.12C3.69,18.4,5.05,18,6.5,18c2.07,0,3.98,0.82,5.5,2c1.52-1.18,3.43-2,5.5-2c1.45,0,2.81,0.4,4.02,1.04 c0.16,0.08,0.32,0.12,0.48,0.12c0.52,0,1-0.41,1-0.99V6.08C23,5.71,22.8,5.36,22.47,5.2z M10,16.62C8.86,16.21,7.69,16,6.5,16 c-1.19,0-2.36,0.21-3.5,0.62V6.71C4.11,6.24,5.28,6,6.5,6C7.7,6,8.89,6.25,10,6.72V16.62z M19,0.5l-5,5V15l5-4.5V0.5z"/></g></svg>`
             },
             {
-                title: 'Business',
+                title: 'Business & Economy',
                 icon: `<svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M20 7h-4V5l-2-2h-4L8 5v2H4c-1.1 0-2 .9-2 2v5c0 .75.4 1.38 1 1.73V19c0 1.11.89 2 2 2h14c1.11 0 2-.89 2-2v-3.28c.59-.35 1-.99 1-1.72V9c0-1.1-.9-2-2-2zM10 5h4v2h-4V5zM4 9h16v5h-5v-3H9v3H4V9zm9 6h-2v-2h2v2zm6 4H5v-3h4v1h6v-1h4v3z"/></svg>`
             },
             {
@@ -1644,27 +1644,25 @@
         function handleMobileChange(e) {
             isMobileView = e.matches
             // move article key points 
-            if (pagesData.lastPage === 'article') {
-                if (isMobileView) {
-                    const original = getRef('article_map').querySelector('#article_map_container')
-                    if (original) {
-                        const clone = original.cloneNode(true)
-                        original.remove()
-                        getRef('article_map_accordion').append(clone)
-                    }
-                } else {
-                    const original = getRef('article_map_accordion').querySelector('#article_map_container')
-                    if (original) {
-                        const clone = original.cloneNode(true)
-                        original.remove()
-                        getRef('article_map').append(clone)
-                    }
+            if (isMobileView) {
+                const original = getRef('article_map').querySelector('#article_map_container')
+                if (original) {
+                    const clone = original.cloneNode(true)
+                    original.remove()
+                    getRef('article_map_accordion').append(clone)
                 }
-                const allHeadings = getRef('article_body').querySelectorAll('h3')
-                allHeadings.forEach(heading => {
-                    headingObserver.observe(heading.nextElementSibling)
-                })
+            } else {
+                const original = getRef('article_map_accordion').querySelector('#article_map_container')
+                if (original) {
+                    const clone = original.cloneNode(true)
+                    original.remove()
+                    getRef('article_map').append(clone)
+                }
             }
+            const allHeadings = getRef('article_body').querySelectorAll('h3')
+            allHeadings.forEach(heading => {
+                headingObserver.observe(heading.nextElementSibling)
+            })
         }
 
         function generateCredentials() {

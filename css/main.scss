@@ -118,7 +118,7 @@ button,
 .cta {
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 .icon-only {
@@ -204,7 +204,7 @@ ul {
 }
 
 .h5 {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .uppercase {
@@ -532,7 +532,7 @@ sm-copy {
   }
 }
 .label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: rgba(var(--text-color), 0.8);
   margin-bottom: 0.2rem;
 }
@@ -615,7 +615,7 @@ theme-toggle {
   flex-direction: column;
   padding: 0.8rem 0.5rem;
   color: inherit;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   flex-shrink: 0;
   align-items: center;
   border-radius: 0.5rem;
@@ -655,7 +655,7 @@ theme-toggle {
     background-color: rgba(var(--text-color), 0.06);
     margin-right: 0.5rem;
     border-radius: 0.2rem;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     padding: 0.2rem 0.4rem;
     font-weight: 500;
     color: rgba(var(--text-color), 0.8);
@@ -663,7 +663,7 @@ theme-toggle {
     text-transform: capitalize;
   }
   .flex {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -696,7 +696,7 @@ theme-toggle {
   padding: 1.5rem;
   gap: 3rem;
   sm-copy {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
 }
 #writer_profile {
@@ -761,7 +761,7 @@ theme-toggle {
 }
 .contributor {
   color: inherit;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   background-color: rgba(var(--text-color), 0.06);
   border-radius: 0.3rem;
   padding: 0.3rem 0.5rem;
@@ -858,7 +858,7 @@ theme-toggle {
     grid-area: 2/1;
   }
   &__time {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
   .flex {
     grid-row: span 2;
@@ -871,7 +871,7 @@ theme-toggle {
   gap: 1rem;
   grid-template-columns: 1fr auto auto;
   &__published {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -901,7 +901,7 @@ theme-toggle {
   }
   time,
   #reading_time {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -941,7 +941,7 @@ theme-toggle {
   }
   sm-copy {
     margin-top: -0.5rem;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
 }
 #cc_section {
