@@ -523,9 +523,9 @@
             <div class="grid gap-1">
                 <div class="grid">
                     <h5>My FLO ID</h5>
-                    <sm-copy id="user_flo_id"></sm-copy>
+                    <sm-copy id="user_flo_id" clip-text></sm-copy>
                 </div>
-                <sm-button class="danger cta" onclick="signOut()">Sign out</sm-button>
+                <sm-button class="danger cta justify-self-start" onclick="signOut()">Sign out</sm-button>
             </div>
             <a href="#/dashboard" class="button hide admin-option" onclick="hidePopup()">Admin dashboard</a>
         </section>
@@ -1226,7 +1226,7 @@
                     getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
                 }
             },
-            explorePage() {
+            explorePage(params) {
                 const { type, query } = params
                 const frag = document.createDocumentFragment()
                 const sortedByTime = getArrayOfObj(floGlobals.appObjects.rmTimes.articles).sort((a, b) => b.published - a.published)
@@ -1242,7 +1242,7 @@
                 getRef('query_results_list').innerHTML = ''
                 getRef('query_results_list').append(frag)
             },
-            writerPage() {
+            writerPage(params) {
                 if (floGlobals.appObjects.rmTimes.articleWriters.hasOwnProperty(params.id)) {
                     const { name, bio } = floGlobals.appObjects.rmTimes.articleWriters[params.id]
                     getRef('writer_initials').textContent = name[0]
@@ -1639,24 +1639,20 @@
             });
         }
 
-        let isMobile = false
+        let isMobileView = false
         const mobileQuery = window.matchMedia('(max-width: 40rem)')
         function handleMobileChange(e) {
-            if (e.matches) {
-                // Mobile view
-                isMobile = true
-                // move article key points 
-                const original = getRef('article_map').querySelector('#article_map_container')
-                if (original) {
-                    const clone = original.cloneNode(true)
-                    original.remove()
-                    getRef('article_map_accordion').append(clone)
-                }
-
-            } else {
-                // Desktop view
-                isMobile = false
-                if (pagesData.lastPage === 'article') {
+            isMobileView = e.matches
+            // move article key points 
+            if (pagesData.lastPage === 'article') {
+                if (isMobileView) {
+                    const original = getRef('article_map').querySelector('#article_map_container')
+                    if (original) {
+                        const clone = original.cloneNode(true)
+                        original.remove()
+                        getRef('article_map_accordion').append(clone)
+                    }
+                } else {
                     const original = getRef('article_map_accordion').querySelector('#article_map_container')
                     if (original) {
                         const clone = original.cloneNode(true)
@@ -1664,9 +1660,6 @@
                         getRef('article_map').append(clone)
                     }
                 }
-
-            }
-            if (pagesData.lastPage === 'article') {
                 const allHeadings = getRef('article_body').querySelectorAll('h3')
                 allHeadings.forEach(heading => {
                     headingObserver.observe(heading.nextElementSibling)
@@ -1701,7 +1694,39 @@
                 getRef('sign_up').classList.add('hide')
             }
         }
+        function getSignedIn() {
+            return new Promise((resolve, reject) => {
+                getRef('sign_in_button').onclick = () => {
+                    resolve(getRef('private_key_field').value.trim())
+                    getRef('private_key_field').value = ''
+                    hidePopup()
+                    notify('Signed in', 'success')
+                }
+                getRef('sign_up_button').onclick = () => {
+                    getConfirmation('Sign in?', { message: 'Make sure you have copied your private key.' })
+                        .then((res) => {
+                            if (res) {
+                                resolve(getRef('generated_private_key').value.trim())
+                                getRef('generated_private_key').value = ''
+                                hidePopup()
+                                notify('Signed in', 'success')
+                            }
+                        })
+                }
+            })
+        }
+        function signOut() {
+            getConfirmation('Sign out?', 'You are about to sign out of the app, continue?', 'Stay', 'Leave')
+                .then(async (res) => {
+                    if (res) {
+                        await floDapps.clearCredentials()
+                        location.reload()
+                    }
+                })
+        }
 
+
+        // RM times admin functions
         async function renderDashboard() {
             const requests = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`]
             const frag = document.createDocumentFragment()
@@ -2062,32 +2087,6 @@
                     }
                 })
             }
-        }
-
-        function getSignedIn() {
-            return new Promise((resolve, reject) => {
-                getRef('sign_in_button').onclick = () => {
-                    resolve(getRef('private_key_field').value.trim())
-                    getRef('private_key_field').value = ''
-                    hidePopup()
-                    notify('Signed in', 'success')
-                }
-                getRef('sign_up_button').onclick = () => {
-                    resolve(getRef('generated_private_key').value.trim())
-                    getRef('generated_private_key').value = ''
-                    hidePopup()
-                    notify('Signed in', 'success')
-                }
-            })
-        }
-        function signOut() {
-            getConfirmation('Sign out?', 'You are about to sign out of the app, continue?', 'Stay', 'Leave')
-                .then(async (res) => {
-                    if (res) {
-                        await floDapps.clearCredentials()
-                        location.reload()
-                    }
-                })
         }
 
     </script>
