@@ -439,7 +439,6 @@ img {
 }
 
 .logo {
-  position: absolute;
   color: inherit;
   display: grid;
   align-items: center;
@@ -724,17 +723,6 @@ theme-toggle {
 .trending-article a:first-of-type {
   position: relative;
   overflow: hidden;
-}
-.trending-article a:first-of-type::before {
-  color: white;
-  position: absolute;
-  content: counter(trending);
-  font-size: 2.5em;
-  font-weight: 700;
-  line-height: 1;
-  margin: 1rem;
-  z-index: 1;
-  text-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.5);
 }
 .trending-article img {
   height: 12rem;
@@ -1076,6 +1064,14 @@ theme-toggle {
     --padding: 0.8rem;
   }
 
+  .logo {
+    grid-area: 1/1/2/2;
+  }
+
+  #search_button {
+    justify-self: flex-end;
+  }
+
   .writer-card .writer-profile {
     height: 2.5rem;
     width: 2.5rem;
@@ -1137,6 +1133,10 @@ theme-toggle {
 
   #main_header {
     padding: 1rem 1.5rem;
+  }
+
+  .logo {
+    position: absolute;
   }
 
   #main_page {
