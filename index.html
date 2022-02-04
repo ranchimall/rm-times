@@ -158,7 +158,7 @@
                     </svg>
                     <h5>Trending</h5>
                 </div>
-                <div id="trending_article_container" class="grid gap-2"></div>
+                <div id="trending_article_container" class="grid"></div>
             </section>
             <section id="lastest_articles_section" class="flex direction-column gap-1-5">
                 <div class="flex align-center space-between">
@@ -241,6 +241,7 @@
                         <time id="published_time"></time>
                         <span class="bullet-point"></span><span id="reading_time" style="white-space: nowrap;"></span>
                     </div>
+                    <img id="article_image" src="" alt="" loading="lazy">
                 </header>
                 <details id="article_map_accordion" class="hide-on-desktop">
                     <summary class="space-between">
@@ -438,6 +439,10 @@
                     <sm-select id="edit_category"></sm-select>
                 </div>
                 <div class="grid gap-0-5">
+                    <h5>Hero image URL</h5>
+                    <sm-input id="edit_image" type="url"></sm-input>
+                </div>
+                <div class="grid gap-0-5">
                     <h5>Summary</h5>
                     <sm-textarea id="edit_summary" rows="4"></sm-textarea>
                 </div>
@@ -533,6 +538,7 @@
     <template id="trending_article_template">
         <div class="trending-article grid gap-0-5">
             <a class="article-card--highlight grid gap-0-5" href="" style="color: inherit">
+                <img class="trending-article__image" src="" alt="" loading="lazy">
                 <h3 class="trending-article__title"></h3>
                 <p class="trending-article__summary"></p>
             </a>
@@ -546,6 +552,7 @@
     <template id="article_card_template">
         <li class="article-card grid" draggable="true">
             <a href="" class="grid article-link">
+                <img class="article-card__image" src="" alt="" loading='lazy'>
                 <h4 class="article-card__title"></h4>
             </a>
             <div class="flex align-center" style="margin-top: 0.3rem;">
@@ -1086,22 +1093,24 @@
         const relativeTime = new RelativeTime({ style: 'narrow' });
         const render = {
             articleCard(details) {
-                const { uid: articleID, category, title, readTime, published } = details
+                const { uid: articleID, category, title, readTime, published, heroImage } = details
                 const clone = getRef('article_card_template').content.cloneNode(true).firstElementChild
                 clone.querySelector('.article-card__category').textContent = category
                 clone.querySelector('.article-card__category').href = `#/explore?type=category&query=${category}`
                 clone.querySelector('.article-link').href = `#/article?articleID=${articleID}`
+                clone.querySelector('.article-card__image').src = heroImage
                 clone.querySelector('.article-card__title').textContent = title
                 clone.querySelector('.article-card__read-time').textContent = `${readTime} Min read`
                 clone.querySelector('.article-card__published').textContent = relativeTime.from(published)
                 return clone
             },
             trendingArticleCard(details) {
-                const { uid: articleID, category, title, readTime, published, summary } = details
+                const { uid: articleID, category, title, readTime, published, summary, heroImage } = details
                 const clone = getRef('trending_article_template').content.cloneNode(true).firstElementChild
                 clone.querySelector('.article-card__category').textContent = category
                 clone.querySelector('.article-card__category').href = `#/explore?type=category&query=${category}`
                 clone.querySelector('.article-card--highlight').href = `#/article?articleID=${articleID}`
+                clone.querySelector('.trending-article__image').src = heroImage
                 clone.querySelector('.trending-article__title').textContent = title
                 clone.querySelector('.trending-article__read-time').textContent = `${readTime} Min read`
                 clone.querySelector('.trending-article__published').textContent = relativeTime.from(published)
@@ -1109,7 +1118,6 @@
                 return clone
             },
             requestCard(details) {
-                console.log(details)
                 const { senderID, message: { articleID, category, title }, time, vectorClock } = details
                 const { publishedVc, rejectedVc, approvedID } = floGlobals.appObjects.adminData
                 const shouldRender = approvedID.hasOwnProperty(senderID) && !publishedVc.hasOwnProperty(vectorClock) && !rejectedVc.hasOwnProperty(vectorClock)
@@ -1172,7 +1180,8 @@
             async article(articleID, firstLoad = true) {
                 const frag = document.createDocumentFragment()
                 const allArticles = await compactIDB.readData('appObjects', 'articlesContent')
-                const { title, published, readTime, contributors, updated, summary } = floGlobals.appObjects.rmTimes.articles[articleID]
+                const { title, published, readTime, contributors, updated, summary, heroImage } = floGlobals.appObjects.rmTimes.articles[articleID]
+                getRef('article_image').src = heroImage
                 getRef('article_title').textContent = title
                 getRef('article_summary').textContent = summary
                 getRef('published_time').textContent = `${getFormattedTime(published, 'date-only')}${updated ? `, Updated ${relativeTime.from(updated)}` : ''}`
@@ -1849,8 +1858,9 @@
         }
 
         function setArticleMetaData(details) {
-            const { category, title, tags, summary, published, contributors } = details
+            const { category, title, tags, summary, published, contributors, heroImage } = details
             getRef('edit_title').value = title;
+            getRef('edit_image').value = heroImage || '';
             getRef('edit_summary').value = summary || '';
             getRef('edit_category').value = category || '';
             getRef('edit_contributors').value = contributors || [];
@@ -1862,6 +1872,7 @@
             return {
                 title: getRef('edit_title').value.trim(),
                 category: getRef('edit_category').value,
+                heroImage: getRef('edit_image').value,
                 summary: getRef('edit_summary').value.trim(),
                 published: new Date(getRef('edit_published').value).getTime(),
                 contributors: getRef('edit_contributors').value,
@@ -1886,11 +1897,12 @@
         function updateArticleMetaData(articleID) {
             getConfirmation('Update article meta data?').then(res => {
                 if (res) {
-                    const { title, category, summary, published, tags, contributors } = getArticleMetaData()
+                    const { title, category, summary, published, tags, contributors, heroImage } = getArticleMetaData()
                     floGlobals.appObjects.rmTimes.articles[articleID].category = category
                     floGlobals.appObjects.rmTimes.articles[articleID].title = title
                     floGlobals.appObjects.rmTimes.articles[articleID].tags = tags
                     floGlobals.appObjects.rmTimes.articles[articleID].summary = summary
+                    floGlobals.appObjects.rmTimes.articles[articleID].heroImage = heroImage
                     floGlobals.appObjects.rmTimes.articles[articleID].contributors = contributors
                     Promise.all([
                         floCloudAPI.updateObjectData('rmTimes'),
