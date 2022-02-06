@@ -13,6 +13,9 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap"
         rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather+Sans:wght@400..800&display=swap" rel="stylesheet">
     <script src="purify.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6" defer></script>
     <script id="floGlobals">
@@ -259,6 +262,7 @@
                     <div id="article_contributors" class="flex"></div>
                 </section>
             </main>
+
             <button id="go_to_top" class="floating-button hide" onclick="goToTop()">
                 <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
                     fill="#000000">
@@ -430,6 +434,11 @@
         </header>
         <section class="grid gap-1-5">
             <div class="grid gap-1-5">
+                <label class="grid gap-0-5">
+                    <h5>Select Hero image</h5>
+                    <img src="" alt="" id="preview_image">
+                    <input id="select_image" type="file" accept="image">
+                </label>
                 <div class="grid gap-0-5">
                     <h5>Title</h5>
                     <sm-input id="edit_title" required></sm-input>
@@ -438,16 +447,12 @@
                     <h5>Select category</h5>
                     <sm-select id="edit_category"></sm-select>
                 </div>
-                <div class="grid gap-0-5">
-                    <h5>Hero image URL</h5>
-                    <sm-input id="edit_image" type="url"></sm-input>
-                </div>
+            </div>
+            <div class="grid gap-1-5">
                 <div class="grid gap-0-5">
                     <h5>Summary</h5>
                     <sm-textarea id="edit_summary" rows="4"></sm-textarea>
                 </div>
-            </div>
-            <div class="grid gap-1-5">
                 <div class="grid gap-0-5">
                     <h5>Add tags</h5>
                     <tags-input id="edit_tags" limit="10"></tags-input>
@@ -544,8 +549,9 @@
             </a>
             <div class="flex align-center" style="margin-top: 0.3rem;">
                 <a href="" class="article-card__category interact"></a>
-                <span class="trending-article__read-time h5"></span><span class="bullet-point"></span><time
-                    class="trending-article__published h5"></time>
+                <time class="trending-article__published h5"></time>
+                <span class="bullet-point"></span>
+                <span class="trending-article__read-time h5"></span>
             </div>
         </div>
     </template>
@@ -556,8 +562,9 @@
             </a>
             <div class="flex align-center" style="margin-top: 0.3rem;">
                 <a href="" class="article-card__category interact"></a>
-                <span class="article-card__read-time"></span><span class="bullet-point"></span>
                 <time class="article-card__published"></time>
+                <span class="bullet-point"></span>
+                <span class="article-card__read-time"></span>
             </div>
         </li>
     </template>
@@ -1164,11 +1171,13 @@
                 getRef('news_categories_list').innerHTML = ''
                 getRef('news_categories_list').append(frag)
                 const arrOfArticles = getArrayOfObj(floGlobals.appObjects.rmTimes.articles)
-                // Render trending article card
                 let sortedByVotes = arrOfArticles.sort((a, b) => b.votes - a.votes)
-                sortedByVotes.slice(0, 4).forEach(articleDetail => frag.append(render.trendingArticleCard(articleDetail)))
-                getRef('trending_article_container').innerHTML = ''
-                getRef('trending_article_container').append(frag)
+                // Render trending article card
+                compactIDB.readData('appObjects', 'heroImages').then(heroImages => {
+                    sortedByVotes.slice(0, 4).forEach(articleDetail => frag.append(render.trendingArticleCard({ ...articleDetail, heroImage: heroImages[articleDetail.uid].thumbnail })))
+                    getRef('trending_article_container').innerHTML = ''
+                    getRef('trending_article_container').append(frag)
+                })
                 // render latest articles
                 const sortedArticles = sortedByVotes.slice(4).sort((a, b) => b.published - a.published)
                 sortedArticles.forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
@@ -1177,9 +1186,9 @@
             },
             async article(articleID, firstLoad = true) {
                 const frag = document.createDocumentFragment()
-                const allArticles = await compactIDB.readData('appObjects', 'articlesContent')
-                const { title, published, readTime, contributors, updated, summary, heroImage } = floGlobals.appObjects.rmTimes.articles[articleID]
-                getRef('article_image').src = heroImage
+                const [allArticles, heroImages] = await Promise.all([compactIDB.readData('appObjects', 'articlesContent'), compactIDB.readData('appObjects', 'heroImages')])
+                const { title, published, readTime, contributors, updated, summary } = floGlobals.appObjects.rmTimes.articles[articleID]
+                getRef('article_image').src = heroImages[articleID].full
                 getRef('article_title').textContent = title
                 getRef('article_summary').textContent = summary
                 getRef('published_time').textContent = `${getFormattedTime(published, 'date-only')}${updated ? `, Updated ${relativeTime.from(updated)}` : ''}`
@@ -1276,8 +1285,10 @@
             Promise.all([
                 floCloudAPI.requestObjectData('rmTimes'),
                 floCloudAPI.requestObjectData('articlesContent'),
+                floCloudAPI.requestObjectData('heroImages'),
             ]).then(() => {
                 delete floGlobals.appObjects.articlesContent
+                delete floGlobals.appObjects.heroImages
                 showPage(window.location.hash, { firstLoad: true })
             })
         }
@@ -1293,19 +1304,6 @@
             }
             return arr
         }
-
-        // implement image resizing
-        function resizeImage(img, maxWidth, maxHeight) {
-            const canvas = document.createElement('canvas')
-            const ctx = canvas.getContext('2d')
-            const ratio = 1
-            canvas.width = img.width * ratio
-            canvas.height = img.height * ratio
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-            const dataURL = canvas.toDataURL('image/jpeg', 0.5)
-            return dataURL
-        }
-
 
         const categories = [
             {
@@ -1797,7 +1795,7 @@
             const isPublished = floGlobals.appObjects.rmTimes.articles.hasOwnProperty(articleID)
             getConfirmation(`${isPublished ? 'Update' : 'Publish'} article?`).then(res => {
                 if (res) {
-                    const { title, category, summary, published, tags, contributors } = getArticleMetaData()
+                    const { title, category, summary, published, tags, contributors, heroImage } = getArticleMetaData()
                     floGlobals.appObjects.adminData.publishedVc[vectorClock] = true
                     floGlobals.appObjects.articlesContent[articleID] = content
                     if (isPublished) {
@@ -1816,10 +1814,12 @@
                     floGlobals.appObjects.rmTimes.articles[articleID].tags = tags
                     floGlobals.appObjects.rmTimes.articles[articleID].readTime = readTime
                     floGlobals.appObjects.rmTimes.articles[articleID].summary = summary
+                    floGlobals.appObjects.heroImages[articleID] = heroImage
                     Promise.all([
                         floCloudAPI.updateObjectData('rmTimes'),
                         floCloudAPI.updateObjectData('adminData'),
                         floCloudAPI.updateObjectData('articlesContent'),
+                        floCloudAPI.updateObjectData('heroImages'),
                     ]).then(() => {
                         notify(`${isPublished ? 'Updated' : 'Published'} article`, 'success')
                         if (!isPublished) {
@@ -1838,9 +1838,9 @@
                 const { message: { articleID, title, contributors } } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc]
                 const isPublished = floGlobals.appObjects.rmTimes.articles.hasOwnProperty(articleID)
                 if (isPublished)
-                    setArticleMetaData(floGlobals.appObjects.rmTimes.articles[articleID])
+                    setArticleMetaData(floGlobals.appObjects.rmTimes.articles[articleID], articleID)
                 else
-                    setArticleMetaData({ title, contributors })
+                    setArticleMetaData({ title, contributors }, articleID)
                 floGlobals.subAdminData = {
                     actionType: 'request',
                     articleID,
@@ -1876,10 +1876,16 @@
             }
         }
 
-        function setArticleMetaData(details) {
-            const { category, title, tags, summary, published, contributors, heroImage } = details
+        async function setArticleMetaData(details, articleID) {
+            const { category, title, tags, summary, published, contributors } = details
+            const heroImage = floGlobals.appObjects.heroImages[articleID]
             getRef('edit_title').value = title;
-            getRef('edit_image').value = heroImage || '';
+            if (heroImage) {
+                getRef('preview_image').src = heroImage.thumbnail
+                getRef('select_image').value = '';
+            } else {
+                getRef('preview_image').src = ''
+            }
             getRef('edit_summary').value = summary || '';
             getRef('edit_category').value = category || '';
             getRef('edit_contributors').value = contributors || [];
@@ -1891,7 +1897,7 @@
             return {
                 title: getRef('edit_title').value.trim(),
                 category: getRef('edit_category').value,
-                heroImage: getRef('edit_image').value,
+                heroImage: currentSelectedImage,
                 summary: getRef('edit_summary').value.trim(),
                 published: new Date(getRef('edit_published').value).getTime(),
                 contributors: getRef('edit_contributors').value,
@@ -1902,7 +1908,7 @@
             if (e.target.closest('.edit-article')) {
                 const button = e.target.closest('.edit-article');
                 const articleID = button.dataset.articleId;
-                setArticleMetaData(floGlobals.appObjects.rmTimes.articles[articleID])
+                setArticleMetaData(floGlobals.appObjects.rmTimes.articles[articleID], articleID)
                 floGlobals.subAdminData = {
                     actionType: 'analytics',
                     articleID,
@@ -1921,11 +1927,11 @@
                     floGlobals.appObjects.rmTimes.articles[articleID].title = title
                     floGlobals.appObjects.rmTimes.articles[articleID].tags = tags
                     floGlobals.appObjects.rmTimes.articles[articleID].summary = summary
-                    floGlobals.appObjects.rmTimes.articles[articleID].heroImage = heroImage
                     floGlobals.appObjects.rmTimes.articles[articleID].contributors = contributors
+                    floGlobals.appObjects.heroImages[articleID] = heroImage
                     Promise.all([
                         floCloudAPI.updateObjectData('rmTimes'),
-                        floCloudAPI.updateObjectData('adminData'),
+                        floCloudAPI.updateObjectData('heroImages'),
                     ]).then(() => {
                         notify(`Updated article meta data`, 'success')
                         hidePopup()
@@ -1991,7 +1997,10 @@
                         console.log('calculated votes')
                     })
             })
-            floGlobals.appObjects.articlesContent = await compactIDB.readData('appObjects', 'articlesContent')
+            Promise.all([compactIDB.readData('appObjects', 'articlesContent'), compactIDB.readData('appObjects', 'heroImages')]).then(res => {
+                floGlobals.appObjects.articlesContent = res[0];
+                floGlobals.appObjects.heroImages = res[1];
+            })
         }
 
         getRef('section_selector').addEventListener('change', e => {
@@ -2117,6 +2126,45 @@
                 })
             }
         }
+
+        let currentSelectedImage = {}
+        getRef('select_image').addEventListener('change', function (e) {
+            currentSelectedImage = {}
+            if (this.files.length === 0) return
+            const selectedFile = this.files[0]
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                // show selected image in the preview
+                getRef('preview_image').src = e.target.result;
+                getRef('preview_image').addEventListener('load', function (event) {
+                    // Dynamically create a canvas element
+                    const canvas = createElement("canvas");
+                    const context = canvas.getContext("2d");
+                    const originalWidth = getRef('preview_image').width;
+                    const originalHeight = getRef('preview_image').height;
+                    const resizingFactor = parseFloat((1 / (originalWidth / 600)).toFixed(2));
+
+                    const canvasWidth = originalWidth * resizingFactor;
+                    const canvasHeight = originalHeight * resizingFactor;
+
+                    canvas.width = canvasWidth;
+                    canvas.height = canvasHeight;
+
+                    context.drawImage(
+                        getRef('preview_image'),
+                        0,
+                        0,
+                        originalWidth * resizingFactor,
+                        originalHeight * resizingFactor
+                    );
+                    currentSelectedImage['thumbnail'] = canvas.toDataURL(selectedFile.type);
+                }, { once: true });
+                currentSelectedImage.name = selectedFile.name
+                currentSelectedImage.type = selectedFile.type
+                currentSelectedImage.full = e.target.result
+            }
+            reader.readAsDataURL(this.files[0]);
+        })
 
     </script>
     <script id="onLoadStartUp">
