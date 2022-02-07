@@ -127,7 +127,7 @@ customElements.define('sm-button',
         }
 
         handleKeyDown(e) {
-            if (!this.hasAttribute('disabled') && (e.key === 'Enter' || e.code === 'Space')) {
+            if (!this.hasAttribute('disabled') && (e.key === 'Enter' || e.key === ' ')) {
                 e.preventDefault();
                 this.click();
             }
@@ -1379,7 +1379,7 @@ customElements.define('sm-popup', class extends HTMLElement {
 
 
     detectFocus(e) {
-        if (e.code === 'Tab') {
+        if (e.key === 'Tab') {
             const lastElement = this.focusable[this.focusable.length - 1];
             const firstElement = this.focusable[0];
             if (e.shiftKey && document.activeElement === firstElement) {
@@ -1607,7 +1607,7 @@ class ThemeToggle extends HTMLElement {
         this.fireEvent();
     }
     handleKeyDown(e) {
-        if (e.code === 'Space') {
+        if (e.key === ' ') {
             this.toggleState();
         }
     }
@@ -2404,7 +2404,7 @@ customElements.define('sm-select', class extends HTMLElement {
     }
 
     handleOptionsNavigation(e) {
-        if (e.code === 'ArrowUp') {
+        if (e.key === 'ArrowUp') {
             e.preventDefault()
             if (document.activeElement.previousElementSibling) {
                 document.activeElement.previousElementSibling.focus()
@@ -2412,7 +2412,7 @@ customElements.define('sm-select', class extends HTMLElement {
                 this.availableOptions[this.availableOptions.length - 1].focus()
             }
         }
-        else if (e.code === 'ArrowDown') {
+        else if (e.key === 'ArrowDown') {
             e.preventDefault()
             if (document.activeElement.nextElementSibling) {
                 document.activeElement.nextElementSibling.focus()
@@ -2438,12 +2438,12 @@ customElements.define('sm-select', class extends HTMLElement {
     }
     handleKeydown(e) {
         if (e.target === this) {
-            if (this.isOpen && e.code === 'ArrowDown') {
+            if (this.isOpen && e.key === 'ArrowDown') {
                 e.preventDefault()
                 this.availableOptions[0].focus()
                 this.handleOptionSelection(e)
             }
-            else if (e.code === 'Enter' || e.code === 'Space') {
+            else if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
                 this.toggle()
             }
@@ -2451,7 +2451,7 @@ customElements.define('sm-select', class extends HTMLElement {
         else {
             this.handleOptionsNavigation(e)
             this.handleOptionSelection(e)
-            if (e.code === 'Enter' || e.code === 'Space') {
+            if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
                 this.collapse()
             }
@@ -2726,7 +2726,7 @@ customElements.define('sm-checkbox', class extends HTMLElement {
         }))
     }
     handleKeyDown(e) {
-        if (e.code === "Space") {
+        if (e.key === ' ') {
             e.preventDefault()
             this.click()
         }
@@ -2961,7 +2961,7 @@ customElements.define('sm-switch', class extends HTMLElement {
 
     connectedCallback() {
         this.addEventListener('keydown', e => {
-            if (e.code === "Space" && !this.isDisabled) {
+            if (e.key === ' ' && !this.isDisabled) {
                 e.preventDefault()
                 this.input.click()
             }
@@ -3188,16 +3188,16 @@ customElements.define('sm-menu', class extends HTMLElement {
     handleKeyDown(e) {
         // If key is pressed on menu button
         if (e.target === this) {
-            if (e.code === 'ArrowDown') {
+            if (e.key === 'ArrowDown') {
                 e.preventDefault()
                 this.availableOptions[0].focus()
             }
-            else if (e.code === 'Enter' || e.code === 'Space') {
+            else if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
                 this.toggle()
             }
         } else { // If key is pressed over menu options
-            if (e.code === 'ArrowUp') {
+            if (e.key === 'ArrowUp') {
                 e.preventDefault()
                 if (document.activeElement.previousElementSibling) {
                     document.activeElement.previousElementSibling.focus()
@@ -3205,7 +3205,7 @@ customElements.define('sm-menu', class extends HTMLElement {
                     this.availableOptions[this.availableOptions.length - 1].focus()
                 }
             }
-            else if (e.code === 'ArrowDown') {
+            else if (e.key === 'ArrowDown') {
                 e.preventDefault()
                 if (document.activeElement.nextElementSibling) {
                     document.activeElement.nextElementSibling.focus()
@@ -3213,7 +3213,7 @@ customElements.define('sm-menu', class extends HTMLElement {
                     this.availableOptions[0].focus()
                 }
             }
-            else if (e.code === 'Enter' || e.code === 'Space') {
+            else if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
                 e.target.click()
             }
@@ -3302,7 +3302,7 @@ customElements.define('menu-option', class extends HTMLElement {
         this.setAttribute('role', 'option')
         this.setAttribute('tabindex', '0')
         this.addEventListener('keyup', e => {
-            if (e.code === 'Enter' || e.code === 'Space') {
+            if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
                 this.click()
             }

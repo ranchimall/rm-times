@@ -13,9 +13,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap"
         rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400..700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather+Sans:wght@400..800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400..800&display=swap" rel="stylesheet">
     <script src="purify.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6" defer></script>
     <script id="floGlobals">
@@ -238,6 +236,15 @@
             </aside>
             <main class="grid gap-2">
                 <header class="hero-section">
+                    <div class="flex align-center" style="margin-bottom: 0.5rem; font-size: 0.9rem;">
+                        <a href="#/home">Home</a>
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
+                            width="24px" fill="#000000">
+                            <path d="M0 0h24v24H0V0z" fill="none" />
+                            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z" />
+                        </svg>
+                        <a href="" class="capitalize" id="article_category"></a>
+                    </div>
                     <h1 id="article_title"></h1>
                     <p id="article_summary"></p>
                     <div class="flex align-center">
@@ -876,7 +883,7 @@
             document.querySelectorAll('sm-input[data-flo-id]').forEach(input => input.customValidation = floCrypto.validateAddr)
             document.querySelectorAll('sm-input[data-private-key]').forEach(input => input.customValidation = floCrypto.getPubKeyHex)
             document.addEventListener('keyup', (e) => {
-                if (e.code === 'Escape') {
+                if (e.key === 'Escape') {
                     hidePopup()
                 }
             })
@@ -1187,12 +1194,14 @@
             async article(articleID, firstLoad = true) {
                 const frag = document.createDocumentFragment()
                 const [allArticles, heroImages] = await Promise.all([compactIDB.readData('appObjects', 'articlesContent'), compactIDB.readData('appObjects', 'heroImages')])
-                const { title, published, readTime, contributors, updated, summary } = floGlobals.appObjects.rmTimes.articles[articleID]
-                getRef('article_image').src = heroImages[articleID].full
+                const { title, published, readTime, contributors, updated, summary, category } = floGlobals.appObjects.rmTimes.articles[articleID]
+                getRef('article_category').textContent = category
+                getRef('article_category').href = `#/explore?type=category&query=${category}`
                 getRef('article_title').textContent = title
                 getRef('article_summary').textContent = summary
                 getRef('published_time').textContent = `${getFormattedTime(published, 'date-only')}${updated ? `, Updated ${relativeTime.from(updated)}` : ''}`
                 getRef('reading_time').textContent = `${readTime} Min read`
+                getRef('article_image').src = heroImages[articleID].full
                 getRef('article_body').innerHTML = DOMPurify.sanitize(allArticles[articleID])
                 const allHeadings = getRef('article_body').querySelectorAll('h3')
                 allHeadings.forEach(heading => {
@@ -1457,12 +1466,14 @@
         }, 100))
 
         getRef('search_articles').addEventListener('keyup', e => {
-            if (e.target.value.trim() !== '' && e.code === 'Enter') {
+            // detect enter key press
+            if (e.target.value.trim() !== '' && e.key === 'Enter') {
                 location.hash = `#/explore?type=search&query=${e.target.value.trim()}`
                 e.target.value = ''
                 toggleSearch()
             }
         })
+
         delegate(getRef('search_suggestions'), 'click', '.search-suggestion', e => {
             getRef('search_articles').value = ''
             toggleSearch()

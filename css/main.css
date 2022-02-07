@@ -22,7 +22,7 @@ body,
 body * {
   --accent-color: #256eff;
   --text-color: 20, 20, 20;
-  --background-color: 255, 255, 255;
+  --background-color: 255, 250, 246;
   --foreground-color: rgb(255, 255, 255);
   --danger-color: rgb(255, 75, 75);
   --green: #1cad59;
@@ -51,7 +51,7 @@ strong {
   font-size: 0.9rem;
   max-width: 65ch;
   line-height: 1.7;
-  color: rgba(var(--text-color), 0.8);
+  color: rgba(var(--text-color), 0.9);
 }
 p:not(:last-of-type),
 strong:not(:last-of-type) {
@@ -642,7 +642,7 @@ theme-toggle {
 #main_page {
   align-content: flex-start;
   display: grid;
-  padding: 1.5rem;
+  padding: 0.5rem 1.5rem;
   gap: 2rem;
   grid-template-columns: minmax(0, 1fr);
 }
@@ -663,7 +663,7 @@ theme-toggle {
   border-radius: 0.5rem;
   width: 5.2rem;
   text-align: center;
-  background-color: #e6352f08;
+  background-color: rgba(var(--text-color), 0.02);
 }
 .category .icon {
   margin-bottom: 1rem;
@@ -731,7 +731,7 @@ theme-toggle {
 
 #explore {
   align-items: flex-start;
-  padding-top: 1.5rem;
+  padding-top: 1rem;
 }
 
 #writer {
@@ -795,9 +795,9 @@ theme-toggle {
   position: relative;
   display: grid;
   gap: 0.5rem;
-  margin-top: 1.5rem;
   align-content: flex-end;
   width: 100%;
+  margin-top: 0.5rem;
 }
 .hero-section p {
   color: inherit;
@@ -811,6 +811,11 @@ theme-toggle {
   height: 100%;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0));
   z-index: -1;
+}
+
+#article_category {
+  color: var(--accent-color);
+  font-weight: 500;
 }
 
 #article_image {
@@ -944,7 +949,7 @@ theme-toggle {
 
 #preview_popup h1,
 #article h1 {
-  font-size: 1.6rem;
+  font-size: 1.7rem;
   line-height: 1.1;
 }
 #preview_popup h3:not(:first-of-type),
@@ -961,7 +966,8 @@ theme-toggle {
 }
 #preview_popup p,
 #article p {
-  font-size: 1.1rem;
+  font-family: "Noto serif", serif;
+  font-size: 1.05rem;
   line-height: 1.8;
 }
 #preview_popup p > *,
@@ -1222,6 +1228,10 @@ theme-toggle {
 
   .heading-shortcut.active {
     color: var(--accent-color) !important;
+  }
+
+  .hero-section {
+    margin-top: 1.5rem;
   }
 
   #action_panel {
