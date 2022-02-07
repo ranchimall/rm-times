@@ -22,7 +22,7 @@ body,
 body * {
   --accent-color: #256eff;
   --text-color: 20, 20, 20;
-  --background-color: 255, 250, 246;
+  --background-color: 252, 245, 239;
   --foreground-color: rgb(255, 255, 255);
   --danger-color: rgb(255, 75, 75);
   --green: #1cad59;
@@ -60,12 +60,9 @@ strong:not(:last-of-type) {
 
 a {
   text-decoration: none;
-}
-
-a:not([class]) {
   color: var(--accent-color);
 }
-a:not([class]):focus-visible {
+a:focus-visible {
   box-shadow: 0 0 0 0.1rem rgba(var(--text-color), 1) inset;
 }
 
@@ -118,7 +115,6 @@ button,
 
 .cta {
   text-transform: uppercase;
-  letter-spacing: 0.05em;
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -676,9 +672,22 @@ theme-toggle {
 }
 
 .article-card {
-  gap: 0.3rem;
+  position: relative;
+  gap: 0.3rem 1rem;
+  grid-template-columns: 5rem 1fr;
+  grid-template-rows: auto 1fr;
+  align-items: flex-start;
+  grid-template-areas: "img title" "img content";
+}
+.article-card img {
+  left: 0;
+  top: 0;
+  position: absolute;
+  height: 5rem;
+  width: 5rem;
 }
 .article-card a {
+  grid-area: title;
   color: inherit;
 }
 .article-card .article-link {
@@ -688,6 +697,7 @@ theme-toggle {
   line-height: 1.4;
 }
 .article-card .flex {
+  grid-area: content;
   font-size: 0.75rem;
 }
 
@@ -719,6 +729,7 @@ theme-toggle {
   overflow: hidden;
 }
 .trending-article p {
+  font-family: "Noto serif", serif;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -762,7 +773,6 @@ theme-toggle {
 
 #article {
   display: flex;
-  flex-wrap: wrap;
   overflow-y: auto;
 }
 #article main > section:last-of-type {
@@ -813,11 +823,6 @@ theme-toggle {
   z-index: -1;
 }
 
-#article_category {
-  color: var(--accent-color);
-  font-weight: 500;
-}
-
 #article_image {
   margin-top: 1.5rem;
 }
@@ -838,6 +843,12 @@ theme-toggle {
   background-color: rgba(var(--text-color), 0.06);
   border-radius: 0.3rem;
   padding: 0.3rem 0.5rem;
+}
+
+#related_articles {
+  margin-top: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1.5rem;
 }
 
 #action_panel {
@@ -949,6 +960,7 @@ theme-toggle {
 
 #preview_popup h1,
 #article h1 {
+  font-weight: 800;
   font-size: 1.7rem;
   line-height: 1.1;
 }
@@ -1194,7 +1206,6 @@ theme-toggle {
   #preview_popup h1,
 #article h1 {
     font-size: 2.2rem;
-    font-weight: 800;
   }
   #preview_popup h3,
 #article h3 {

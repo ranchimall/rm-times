@@ -13,7 +13,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap"
         rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400..800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400..900&display=swap" rel="stylesheet">
     <script src="purify.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6" defer></script>
     <script id="floGlobals">
@@ -236,7 +236,7 @@
             </aside>
             <main class="grid gap-2">
                 <header class="hero-section">
-                    <div class="flex align-center" style="margin-bottom: 0.5rem; font-size: 0.9rem;">
+                    <div class="flex align-center" style="margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 500;">
                         <a href="#/home">Home</a>
                         <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
                             width="24px" fill="#000000">
@@ -267,6 +267,10 @@
                 <section>
                     <h4>Article by -</h4>
                     <div id="article_contributors" class="flex"></div>
+                </section>
+                <section>
+                    <h5>Pick something to read </h5>
+                    <div id="related_articles" class="grid"></div>
                 </section>
             </main>
 
@@ -563,8 +567,9 @@
         </div>
     </template>
     <template id="article_card_template">
-        <li class="article-card grid" draggable="true">
+        <li class="article-card grid">
             <a href="" class="grid article-link">
+                <img class="article-card__image" src="" alt="" loading="lazy">
                 <h4 class="article-card__title"></h4>
             </a>
             <div class="flex align-center" style="margin-top: 0.3rem;">
@@ -1106,11 +1111,12 @@
         const relativeTime = new RelativeTime({ style: 'narrow' });
         const render = {
             articleCard(details) {
-                const { uid: articleID, category, title, readTime, published } = details
+                const { uid: articleID, category, title, readTime, published, heroImage } = details
                 const clone = getRef('article_card_template').content.cloneNode(true).firstElementChild
                 clone.querySelector('.article-card__category').textContent = category
                 clone.querySelector('.article-card__category').href = `#/explore?type=category&query=${category}`
                 clone.querySelector('.article-link').href = `#/article?articleID=${articleID}`
+                clone.querySelector('.article-card__image').src = heroImage
                 clone.querySelector('.article-card__title').textContent = title
                 clone.querySelector('.article-card__read-time').textContent = `${readTime} Min read`
                 clone.querySelector('.article-card__published').textContent = relativeTime.from(published)
@@ -1227,8 +1233,32 @@
                 })
                 getRef('article_contributors').innerHTML = ''
                 getRef('article_contributors').append(frag)
-                getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
+
+                const fuse = new Fuse(getArrayOfObj(floGlobals.appObjects.rmTimes.articles), { keys: ['category'], threshold: 0 })
+                const searchResult = fuse.search(category).map(v => v.item).filter(v => v.uid !== articleID)
+                compactIDB.readData('appObjects', 'heroImages').then(heroImages => {
+                    let randomNumbers = []
+                    if (searchResult.length > 3) {
+                        // generate non-repeating random numbers
+                        while (randomNumbers.length < 3) {
+                            const randomNumber = Math.floor(Math.random() * searchResult.length)
+                            if (!randomNumbers.includes(randomNumber)) {
+                                randomNumbers.push(randomNumber)
+                            }
+                        }
+                    } else {
+                        randomNumbers = searchResult.map((v, i) => i)
+                    }
+                    randomNumbers.forEach((index) => {
+                        const { uid } = searchResult[index]
+                        frag.append(render.articleCard({ ...searchResult[index], heroImage: heroImages[uid].thumbnail }))
+                    })
+                    getRef('related_articles').innerHTML = ''
+                    getRef('related_articles').append(frag)
+                })
+
                 // implement live voting
+                getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
                 if (!openedArticles.hasOwnProperty(articleID)) {
                     floCloudAPI.requestGeneralData(`article_${articleID}_votes`, {
                         lowerVectorClock: floGlobals.appObjects.rmTimes.articles[articleID].lastCountedVC + 1,
@@ -1251,23 +1281,25 @@
                     getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
                 }
             },
-            explorePage(params) {
+            async explorePage(params) {
+                const heroImages = await compactIDB.readData('appObjects', 'heroImages')
                 const { type, query } = params
                 const frag = document.createDocumentFragment()
                 const sortedByTime = getArrayOfObj(floGlobals.appObjects.rmTimes.articles).sort((a, b) => b.published - a.published)
                 if (type === 'recent') {
-                    sortedByTime.forEach(articleDetail => frag.append(render.trendingArticleCard(articleDetail)))
+                    sortedByTime.forEach(articleDetail => frag.append(render.trendingArticleCard({ ...articleDetail, heroImage: heroImages[articleDetail.uid].thumbnail })))
                 } else {
                     const options = (type === 'category') ? { keys: ['category'], threshold: 0 } : { keys: ['title', 'category', 'tags'], threshold: 0.3 }
                     const fuse = new Fuse(sortedByTime, options)
                     const searchResult = fuse.search(query).map(v => v.item)
-                    searchResult.forEach(articleDetail => frag.append(render.trendingArticleCard(articleDetail)))
+                    searchResult.forEach(articleDetail => frag.append(render.trendingArticleCard({ ...articleDetail, heroImage: heroImages[articleDetail.uid].thumbnail })))
                     getRef('explore_heading').textContent = `${type === 'category' ? 'Explore' : 'Related to'} ${query}`
                 }
                 getRef('query_results_list').innerHTML = ''
                 getRef('query_results_list').append(frag)
             },
-            writerPage(params) {
+            async writerPage(params) {
+                const heroImages = await compactIDB.readData('appObjects', 'heroImages')
                 if (floGlobals.appObjects.rmTimes.articleWriters.hasOwnProperty(params.id)) {
                     const { name, bio } = floGlobals.appObjects.rmTimes.articleWriters[params.id]
                     getRef('writer_initials').textContent = name[0]
@@ -1284,7 +1316,7 @@
                 const options = { keys: ['contributors'], threshold: 0 }
                 const fuse = new Fuse(sortedByTime, options)
                 const searchResult = fuse.search(params.id).map(v => v.item)
-                searchResult.forEach(articleDetail => frag.append(render.trendingArticleCard(articleDetail)))
+                searchResult.forEach(articleDetail => frag.append(render.trendingArticleCard({ ...articleDetail, heroImage: heroImages[articleDetail.uid].thumbnail })))
                 getRef('written_article_list').innerHTML = ''
                 getRef('written_article_list').append(frag)
             },
