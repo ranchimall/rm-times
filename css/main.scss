@@ -20,7 +20,7 @@ body {
     --accent-color: #256eff;
     --text-color: 20, 20, 20;
     --background-color: 252, 245, 239;
-    --foreground-color: rgb(255, 255, 255);
+    --foreground-color: rgb(255, 253, 251);
     --danger-color: rgb(255, 75, 75);
     --green: #1cad59;
     --like-color: #e91e63;
@@ -633,6 +633,9 @@ theme-toggle {
   }
 }
 
+#latest_articles_list {
+  padding-bottom: 3rem;
+}
 .article-card {
   position: relative;
   gap: 0.3rem 1rem;
@@ -792,7 +795,6 @@ theme-toggle {
   margin: 0.5rem 0 1rem 0;
 }
 .contributor {
-  color: inherit;
   font-size: 0.75rem;
   background-color: rgba(var(--text-color), 0.06);
   border-radius: 0.3rem;

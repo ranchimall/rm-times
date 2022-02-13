@@ -11,9 +11,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Archivo:wght@400..900&family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap"
         rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400..900&display=swap" rel="stylesheet">
     <script src="purify.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6" defer></script>
     <script id="floGlobals">
@@ -25,7 +24,7 @@
 
             //Required for blockchain API operators
             apiURL: {
-                FLO: ['https://livenet.flocha.in/', 'https://flosight.duckdns.org/'],
+                FLO: ['https://flosight.duckdns.org/', 'https://livenet.flocha.in/'],
                 FLO_TEST: ['https://testnet-flosight.duckdns.org/', 'https://testnet.flocha.in/']
             },
             adminID: "FF5pewfsJxyrCvg8a2C8VXefeyVvKvQxmF",
@@ -157,7 +156,7 @@
                         <path d="M0 0h24v24H0V0z" fill="none" />
                         <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z" />
                     </svg>
-                    <h5>Trending</h5>
+                    <h5>Top articles</h5>
                 </div>
                 <div id="trending_article_container" class="grid"></div>
             </section>
@@ -445,11 +444,6 @@
         </header>
         <section class="grid gap-1-5">
             <div class="grid gap-1-5">
-                <label class="grid gap-0-5">
-                    <h5>Select Hero image</h5>
-                    <img src="" alt="" id="preview_image">
-                    <input id="select_image" type="file" accept="image">
-                </label>
                 <div class="grid gap-0-5">
                     <h5>Title</h5>
                     <sm-input id="edit_title" required></sm-input>
@@ -458,6 +452,11 @@
                     <h5>Select category</h5>
                     <sm-select id="edit_category"></sm-select>
                 </div>
+                <label class="grid gap-0-5">
+                    <h5>Select Hero image</h5>
+                    <img src="" alt="" id="preview_image">
+                    <input id="select_image" type="file" accept="image">
+                </label>
             </div>
             <div class="grid gap-1-5">
                 <div class="grid gap-0-5">
@@ -1173,7 +1172,7 @@
                 clone.querySelector('.flo-id').textContent = floID
                 return clone
             },
-            homepage() {
+            async homepage() {
                 const frag = document.createDocumentFragment()
                 // Render article topics
                 categories.forEach(({ title, icon }) => frag.append(createElement('a', {
@@ -1185,21 +1184,30 @@
                 getRef('news_categories_list').append(frag)
                 const arrOfArticles = getArrayOfObj(floGlobals.appObjects.rmTimes.articles)
                 let sortedByVotes = arrOfArticles.sort((a, b) => b.votes - a.votes)
+                const allImages = await compactIDB.readAllData('images')
                 // Render trending article card
-                compactIDB.readData('appObjects', 'heroImages').then(heroImages => {
-                    sortedByVotes.slice(0, 4).forEach(articleDetail => frag.append(render.trendingArticleCard({ ...articleDetail, heroImage: heroImages[articleDetail.uid].thumbnail })))
-                    getRef('trending_article_container').innerHTML = ''
-                    getRef('trending_article_container').append(frag)
+                sortedByVotes.slice(0, 4).forEach(articleDetail => {
+                    frag.append(render.trendingArticleCard({
+                        ...articleDetail,
+                        heroImage: allImages[articleDetail.uid].heroImage.thumbnail
+                    }))
                 })
+                getRef('trending_article_container').innerHTML = ''
+                getRef('trending_article_container').append(frag)
                 // render latest articles
                 const sortedArticles = sortedByVotes.slice(4).sort((a, b) => b.published - a.published)
-                sortedArticles.forEach(articleDetail => frag.append(render.articleCard(articleDetail)))
+                sortedArticles.forEach(articleDetail => {
+                    frag.append(render.articleCard({
+                        ...articleDetail,
+                        heroImage: allImages[articleDetail.uid].heroImage.thumbnail
+                    }))
+                })
                 getRef('latest_articles_list').innerHTML = ''
                 getRef('latest_articles_list').append(frag)
             },
             async article(articleID, firstLoad = true) {
                 const frag = document.createDocumentFragment()
-                const [allArticles, heroImages] = await Promise.all([compactIDB.readData('appObjects', 'articlesContent'), compactIDB.readData('appObjects', 'heroImages')])
+                const [allArticles, allImages] = await Promise.all([compactIDB.readData('appObjects', 'articlesContent'), compactIDB.readAllData('images')])
                 const { title, published, readTime, contributors, updated, summary, category } = floGlobals.appObjects.rmTimes.articles[articleID]
                 getRef('article_category').textContent = category
                 getRef('article_category').href = `#/explore?type=category&query=${category}`
@@ -1207,7 +1215,7 @@
                 getRef('article_summary').textContent = summary
                 getRef('published_time').textContent = `${getFormattedTime(published, 'date-only')}${updated ? `, Updated ${relativeTime.from(updated)}` : ''}`
                 getRef('reading_time').textContent = `${readTime} Min read`
-                getRef('article_image').src = heroImages[articleID].full
+                getRef('article_image').src = allImages[articleID].heroImage.full
                 getRef('article_body').innerHTML = DOMPurify.sanitize(allArticles[articleID])
                 const allHeadings = getRef('article_body').querySelectorAll('h3')
                 allHeadings.forEach(heading => {
@@ -1236,26 +1244,24 @@
 
                 const fuse = new Fuse(getArrayOfObj(floGlobals.appObjects.rmTimes.articles), { keys: ['category'], threshold: 0 })
                 const searchResult = fuse.search(category).map(v => v.item).filter(v => v.uid !== articleID)
-                compactIDB.readData('appObjects', 'heroImages').then(heroImages => {
-                    let randomNumbers = []
-                    if (searchResult.length > 3) {
-                        // generate non-repeating random numbers
-                        while (randomNumbers.length < 3) {
-                            const randomNumber = Math.floor(Math.random() * searchResult.length)
-                            if (!randomNumbers.includes(randomNumber)) {
-                                randomNumbers.push(randomNumber)
-                            }
+                let randomNumbers = []
+                if (searchResult.length > 3) {
+                    // generate non-repeating random numbers
+                    while (randomNumbers.length < 3) {
+                        const randomNumber = Math.floor(Math.random() * searchResult.length)
+                        if (!randomNumbers.includes(randomNumber)) {
+                            randomNumbers.push(randomNumber)
                         }
-                    } else {
-                        randomNumbers = searchResult.map((v, i) => i)
                     }
-                    randomNumbers.forEach((index) => {
-                        const { uid } = searchResult[index]
-                        frag.append(render.articleCard({ ...searchResult[index], heroImage: heroImages[uid].thumbnail }))
-                    })
-                    getRef('related_articles').innerHTML = ''
-                    getRef('related_articles').append(frag)
+                } else {
+                    randomNumbers = searchResult.map((v, i) => i)
+                }
+                randomNumbers.forEach((index) => {
+                    const { uid } = searchResult[index]
+                    frag.append(render.articleCard({ ...searchResult[index], heroImage: allImages[uid].heroImage.thumbnail }))
                 })
+                getRef('related_articles').innerHTML = ''
+                getRef('related_articles').append(frag)
 
                 // implement live voting
                 getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
@@ -1282,24 +1288,34 @@
                 }
             },
             async explorePage(params) {
-                const heroImages = await compactIDB.readData('appObjects', 'heroImages')
+                const allImages = await compactIDB.readAllData('images')
                 const { type, query } = params
                 const frag = document.createDocumentFragment()
                 const sortedByTime = getArrayOfObj(floGlobals.appObjects.rmTimes.articles).sort((a, b) => b.published - a.published)
                 if (type === 'recent') {
-                    sortedByTime.forEach(articleDetail => frag.append(render.trendingArticleCard({ ...articleDetail, heroImage: heroImages[articleDetail.uid].thumbnail })))
+                    sortedByTime.forEach(articleDetail => {
+                        frag.append(render.trendingArticleCard({
+                            ...articleDetail,
+                            heroImage: allImages[articleDetail.uid].heroImage.thumbnail
+                        }))
+                    })
                 } else {
                     const options = (type === 'category') ? { keys: ['category'], threshold: 0 } : { keys: ['title', 'category', 'tags'], threshold: 0.3 }
                     const fuse = new Fuse(sortedByTime, options)
                     const searchResult = fuse.search(query).map(v => v.item)
-                    searchResult.forEach(articleDetail => frag.append(render.trendingArticleCard({ ...articleDetail, heroImage: heroImages[articleDetail.uid].thumbnail })))
+                    searchResult.forEach(articleDetail => {
+                        frag.append(render.trendingArticleCard({
+                            ...articleDetail,
+                            heroImage: allImages[articleDetail.uid].heroImage.thumbnail
+                        }))
+                    })
                     getRef('explore_heading').textContent = `${type === 'category' ? 'Explore' : 'Related to'} ${query}`
                 }
                 getRef('query_results_list').innerHTML = ''
                 getRef('query_results_list').append(frag)
             },
             async writerPage(params) {
-                const heroImages = await compactIDB.readData('appObjects', 'heroImages')
+                const allImages = await compactIDB.readAllData('images')
                 if (floGlobals.appObjects.rmTimes.articleWriters.hasOwnProperty(params.id)) {
                     const { name, bio } = floGlobals.appObjects.rmTimes.articleWriters[params.id]
                     getRef('writer_initials').textContent = name[0]
@@ -1316,7 +1332,12 @@
                 const options = { keys: ['contributors'], threshold: 0 }
                 const fuse = new Fuse(sortedByTime, options)
                 const searchResult = fuse.search(params.id).map(v => v.item)
-                searchResult.forEach(articleDetail => frag.append(render.trendingArticleCard({ ...articleDetail, heroImage: heroImages[articleDetail.uid].thumbnail })))
+                searchResult.forEach(articleDetail => {
+                    frag.append(render.trendingArticleCard({
+                        ...articleDetail,
+                        heroImage: allImages[articleDetail.uid].heroImage.thumbnail
+                    }))
+                })
                 getRef('written_article_list').innerHTML = ''
                 getRef('written_article_list').append(frag)
             },
@@ -1326,10 +1347,15 @@
             Promise.all([
                 floCloudAPI.requestObjectData('rmTimes'),
                 floCloudAPI.requestObjectData('articlesContent'),
-                floCloudAPI.requestObjectData('heroImages'),
-            ]).then(() => {
+                floCloudAPI.requestApplicationData('images'),
+            ]).then((res) => {
+                for (const articleID in floGlobals.appObjects.rmTimes.articles) {
+                    const { heroImage } = floGlobals.appObjects.rmTimes.articles[articleID]
+                    compactIDB.writeData('images', {
+                        heroImage: res[2][heroImage].message,
+                    }, articleID)
+                }
                 delete floGlobals.appObjects.articlesContent
-                delete floGlobals.appObjects.heroImages
                 showPage(window.location.hash, { firstLoad: true })
             })
         }
@@ -1836,7 +1862,7 @@
         function publishArticle(vc) {
             const { message: { articleID, content, contributors, title, readTime }, vectorClock } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc];
             const isPublished = floGlobals.appObjects.rmTimes.articles.hasOwnProperty(articleID)
-            getConfirmation(`${isPublished ? 'Update' : 'Publish'} article?`).then(res => {
+            getConfirmation(`${isPublished ? 'Update' : 'Publish'} article?`).then(async res => {
                 if (res) {
                     const { title, category, summary, published, tags, contributors, heroImage } = getArticleMetaData()
                     floGlobals.appObjects.adminData.publishedVc[vectorClock] = true
@@ -1857,12 +1883,15 @@
                     floGlobals.appObjects.rmTimes.articles[articleID].tags = tags
                     floGlobals.appObjects.rmTimes.articles[articleID].readTime = readTime
                     floGlobals.appObjects.rmTimes.articles[articleID].summary = summary
-                    floGlobals.appObjects.heroImages[articleID] = heroImage
+                    compactIDB.writeData('images', { heroImage }, articleID)
+                    const response = await floCloudAPI.sendApplicationData(heroImage, 'images')
+                    for (const key in response) {
+                        floGlobals.appObjects.rmTimes.articles[articleID].heroImage = response[key].vectorClock
+                    }
                     Promise.all([
                         floCloudAPI.updateObjectData('rmTimes'),
                         floCloudAPI.updateObjectData('adminData'),
                         floCloudAPI.updateObjectData('articlesContent'),
-                        floCloudAPI.updateObjectData('heroImages'),
                     ]).then(() => {
                         notify(`${isPublished ? 'Updated' : 'Published'} article`, 'success')
                         if (!isPublished) {
@@ -1921,14 +1950,14 @@
 
         async function setArticleMetaData(details, articleID) {
             const { category, title, tags, summary, published, contributors } = details
-            const heroImage = floGlobals.appObjects.heroImages[articleID]
-            getRef('edit_title').value = title;
-            if (heroImage) {
-                getRef('preview_image').src = heroImage.thumbnail
+            const articleImages = await compactIDB.readData('images', articleID)
+            if (articleImages) {
+                getRef('preview_image').src = articleImages.heroImage.thumbnail
                 getRef('select_image').value = '';
             } else {
                 getRef('preview_image').src = ''
             }
+            getRef('edit_title').value = title;
             getRef('edit_summary').value = summary || '';
             getRef('edit_category').value = category || '';
             getRef('edit_contributors').value = contributors || [];
@@ -1963,7 +1992,7 @@
         }
 
         function updateArticleMetaData(articleID) {
-            getConfirmation('Update article meta data?').then(res => {
+            getConfirmation('Update article meta data?').then(async res => {
                 if (res) {
                     const { title, category, summary, published, tags, contributors, heroImage } = getArticleMetaData()
                     floGlobals.appObjects.rmTimes.articles[articleID].category = category
@@ -1971,11 +2000,12 @@
                     floGlobals.appObjects.rmTimes.articles[articleID].tags = tags
                     floGlobals.appObjects.rmTimes.articles[articleID].summary = summary
                     floGlobals.appObjects.rmTimes.articles[articleID].contributors = contributors
-                    floGlobals.appObjects.heroImages[articleID] = heroImage
-                    Promise.all([
-                        floCloudAPI.updateObjectData('rmTimes'),
-                        floCloudAPI.updateObjectData('heroImages'),
-                    ]).then(() => {
+                    compactIDB.writeData('images', { heroImage }, articleID)
+                    const response = await floCloudAPI.sendApplicationData(heroImage, 'images')
+                    for (const key in response) {
+                        floGlobals.appObjects.rmTimes.articles[articleID].heroImage = response[key].vectorClock
+                    }
+                    floCloudAPI.updateObjectData('rmTimes').then(() => {
                         notify(`Updated article meta data`, 'success')
                         hidePopup()
                     })
@@ -2214,7 +2244,7 @@
         function onLoadStartUp() {
 
             //floDapps.addStartUpFunction('Sample', Promised Function)
-            //floDapps.setAppObjectStores({sampleObs1:{}, sampleObs2:{options{autoIncrement:true, keyPath:'SampleKey'}, Indexes:{sampleIndex:{}}}})
+            floDapps.setAppObjectStores({ images: {} })
             floDapps.setCustomPrivKeyInput(getSignedIn)
             floDapps.setMidStartup(getArticles)
             floDapps.launchStartUp().then(async result => {
