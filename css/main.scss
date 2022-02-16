@@ -485,6 +485,7 @@ sm-copy {
 }
 .page {
   height: 100%;
+  flex: 1;
 }
 .page-layout,
 #preview_page {
@@ -544,10 +545,9 @@ sm-copy {
 }
 
 #main {
-  display: grid;
-  height: 100%;
-  grid-template-rows: auto 1fr;
-  grid-template-columns: minmax(0, 1fr);
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
 }
 
 #main_header {
@@ -736,7 +736,6 @@ theme-toggle {
 
 #article {
   display: flex;
-  overflow-y: auto;
   main {
     & > section:last-of-type {
       padding-bottom: 6rem;
@@ -888,29 +887,13 @@ theme-toggle {
   align-content: flex-start;
 }
 
-.request-card {
+.request-card,
+.article-row {
   display: grid;
+  align-items: center;
   gap: 0.5rem;
   border-radius: 0.5rem;
-  align-items: flex-start;
-  grid-template-columns: minmax(0, 1fr);
-  &__title {
-    grid-area: 2/1;
-  }
   &__time {
-    font-size: 0.75rem;
-  }
-  .flex {
-    grid-row: span 2;
-    margin-top: 0.5rem;
-  }
-}
-
-.article-row {
-  align-items: center;
-  gap: 1rem;
-  grid-template-columns: 1fr auto auto;
-  &__published {
     font-size: 0.75rem;
   }
 }
@@ -1030,6 +1013,16 @@ theme-toggle {
   z-index: -1;
   transform: scale(-1);
   border-radius: 0 0 0.5rem 0.5rem;
+}
+
+#main_footer {
+  background-color: #256eff;
+  color: white;
+  padding: 3rem 0;
+  gap: 1.5rem 0;
+  a {
+    color: inherit;
+  }
 }
 
 .hide {
@@ -1157,12 +1150,12 @@ theme-toggle {
     }
   }
   #article_aside {
-    width: 20rem;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
     position: sticky;
     top: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    width: 20rem;
     height: 100%;
     overflow-y: auto;
   }
@@ -1180,17 +1173,14 @@ theme-toggle {
 
   #action_panel {
     position: relative;
-    margin-top: auto;
   }
   #article_body {
     margin-top: 1rem;
   }
 
-  .request-card {
+  .request-card,
+  .article-row {
     grid-template-columns: 1fr auto;
-    .flex {
-      margin-top: 0;
-    }
   }
   #preview_popup {
     --width: 60ch;
