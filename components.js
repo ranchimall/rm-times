@@ -1216,7 +1216,7 @@ customElements.define('sm-popup', class extends HTMLElement {
     resumeScrolling() {
         const scrollY = document.body.style.top;
         window.scrollTo(0, parseInt(scrollY || '0') * -1);
-        document.body.style.overflow = 'auto';
+        document.body.style.overflow = '';
         document.body.style.top = 'initial';
     }
 

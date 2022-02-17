@@ -27,7 +27,7 @@ body {
 
     scrollbar-width: thin;
   }
-
+  scrollbar-gutter: stable;
   color: rgba(var(--text-color), 1);
   background: rgba(var(--background-color), 1);
 }
@@ -47,6 +47,9 @@ body[data-theme="dark"] {
   }
   ::-webkit-calendar-picker-indicator {
     filter: invert(1);
+  }
+  img {
+    filter: brightness(0.9);
   }
 }
 
@@ -572,7 +575,6 @@ sm-copy {
   grid-column: 1/-1;
   grid-template-columns: auto 1fr auto auto;
   background-color: rgba(var(--background-color), 1);
-  z-index: 2;
 }
 #expanding_search {
   position: absolute;
@@ -917,7 +919,7 @@ theme-toggle {
 #preview_popup,
 #article {
   h1 {
-    font-weight: 700;
+    // font-weight: 700;
     font-size: 1.7rem;
     line-height: 1.1;
   }
@@ -1159,6 +1161,7 @@ theme-toggle {
     display: none;
   }
   #main_header {
+    position: relative;
     padding: 1rem 1.5rem;
   }
   .logo {
@@ -1215,8 +1218,8 @@ theme-toggle {
     flex-direction: column;
     padding: 1.5rem;
     width: 20rem;
-    height: 100%;
-    overflow-y: auto;
+    height: 100vh;
+    overflow-y: overlay;
   }
   #article_map_container {
     margin-bottom: 3rem;
@@ -1286,5 +1289,11 @@ theme-toggle {
     &:hover {
       filter: brightness(120%);
     }
+  }
+}
+
+@supports (overflow: overlay) {
+  body {
+    overflow: overlay;
   }
 }
