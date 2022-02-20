@@ -19,7 +19,7 @@ body {
   * {
     --accent-color: #256eff;
     --text-color: 20, 20, 20;
-    --background-color: 252, 245, 239;
+    --background-color: 252, 250, 245;
     --foreground-color: rgb(255, 253, 251);
     --danger-color: rgb(255, 75, 75);
     --green: #1cad59;
@@ -567,6 +567,7 @@ sm-copy {
 }
 
 #main_header {
+  position: relative;
   display: grid;
   gap: 0.5rem;
   padding: 1rem;
@@ -574,13 +575,17 @@ sm-copy {
   grid-column: 1/-1;
   grid-template-columns: auto 1fr auto auto;
   background-color: rgba(var(--background-color), 1);
+  z-index: 10;
 }
 #expanding_search {
   position: absolute;
   display: grid;
   gap: 0.5rem;
   align-items: center;
-  width: calc(100% - 2rem);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 1;
   background-color: rgba(var(--background-color), 1);
   .icon-only {
@@ -589,7 +594,7 @@ sm-copy {
 }
 #search_suggestions {
   position: absolute;
-  top: calc(100% + 0.5rem);
+  top: 100%;
   background-color: var(--foreground-color);
   padding: 0.3rem;
   width: 100%;
@@ -1065,13 +1070,9 @@ theme-toggle {
 }
 
 #main_footer {
-  background-color: #256eff;
-  color: white;
+  border-top: solid thin rgba(var(--text-color), 0.3);
   padding: 3rem 0;
   gap: 1.5rem 0;
-  a {
-    color: inherit;
-  }
 }
 
 .hide {
@@ -1091,6 +1092,14 @@ theme-toggle {
   }
   #search_button {
     justify-self: flex-end;
+  }
+  #expanding_search {
+    padding: 0 1.5rem 0 1rem;
+    background-color: var(--foreground-color);
+  }
+  #search_suggestions {
+    border-radius: 0 0 0.5rem 0.5rem;
+    box-shadow: 0 1rem 1rem rgba(0, 0, 0, 0.1);
   }
   #article {
     main {
@@ -1149,7 +1158,6 @@ theme-toggle {
     display: none;
   }
   #main_header {
-    position: relative;
     padding: 1rem 1.5rem;
   }
   .logo {
@@ -1166,8 +1174,10 @@ theme-toggle {
   }
   #expanding_search {
     margin: 1rem 1.5rem;
-    left: 0;
     width: 20rem;
+  }
+  #search_suggestions {
+    top: calc(100% + 1rem);
   }
 
   #writer {

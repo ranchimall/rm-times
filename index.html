@@ -461,9 +461,8 @@
                 </div>
                 <label class="grid gap-0-5">
                     <h5>Hero image URL</h5>
-                    <!-- <img src="" alt="" id="preview_image">
-                    <input id="select_image" type="file" accept="image"> -->
-                    <sm-input id="get_hero_image" type="url"></sm-input>
+                    <img src="" alt="" id="preview_image">
+                    <input id="select_image" type="file" accept="image">
                 </label>
             </div>
             <div class="grid gap-1-5">
@@ -1124,9 +1123,30 @@
     <script>
         const openedArticles = {}
         const relativeTime = new RelativeTime({ style: 'narrow' });
+        // checks if an article image is already fetched and if not, fetches it and returns the image
+        const getImage = (articleID) => new Promise((resolve, reject) => {
+            const { heroImage: heroImageVC } = floGlobals.appObjects.rmTimes.articles[articleID]
+            if (mappedImages.hasOwnProperty(articleID)) {
+                compactIDB.readData('images', articleID).then(image => {
+                    if (image) {
+                        resolve(image.heroImage)
+                    }
+                })
+            } else {
+                floCloudAPI.requestApplicationData('images', {
+                    atVectorClock: heroImageVC
+                }).then(result => {
+                    compactIDB.writeData('images', {
+                        heroImage: result[heroImageVC].message,
+                    }, articleID)
+                    mappedImages[articleID] = true
+                    resolve(result[heroImageVC].message)
+                })
+            }
+        })
         const render = {
             articleCard(details) {
-                const { uid: articleID, categories, title, readTime, published, heroImage } = details
+                const { uid: articleID, categories, title, readTime, published } = details
                 const clone = getRef('article_card_template').content.cloneNode(true).firstElementChild
                 const frag = document.createDocumentFragment()
                 categories.forEach(category => {
@@ -1138,14 +1158,17 @@
                 })
                 clone.querySelector('.article-card__categories').append(frag)
                 clone.querySelector('.article-link').href = `#/article?articleID=${articleID}`
-                clone.querySelector('.article-card__image').src = heroImage
                 clone.querySelector('.article-card__title').textContent = title
                 clone.querySelector('.article-card__read-time').textContent = `${readTime} Min read`
                 clone.querySelector('.article-card__published').textContent = relativeTime.from(published)
+                getImage(articleID).then(image => {
+                    if (image.thumbnail)
+                        clone.querySelector('.article-card__image').src = image.thumbnail
+                })
                 return clone
             },
             trendingArticleCard(details) {
-                const { uid: articleID, categories, title, readTime, published, summary, heroImage } = details
+                const { uid: articleID, categories, title, readTime, published, summary } = details
                 const clone = getRef('trending_article_template').content.cloneNode(true).firstElementChild
                 const frag = document.createDocumentFragment()
                 categories.forEach(category => {
@@ -1157,11 +1180,14 @@
                 })
                 clone.querySelector('.trending-article__categories').append(frag)
                 clone.querySelector('.article-card--highlight').href = `#/article?articleID=${articleID}`
-                clone.querySelector('.trending-article__image').src = heroImage
                 clone.querySelector('.trending-article__title').textContent = title
                 clone.querySelector('.trending-article__read-time').textContent = `${readTime} Min read`
                 clone.querySelector('.trending-article__published').textContent = relativeTime.from(published)
                 clone.querySelector('.trending-article__summary').textContent = summary
+                getImage(articleID).then(image => {
+                    if (image.thumbnail)
+                        clone.querySelector('.trending-article__image').src = image.thumbnail
+                })
                 return clone
             },
             requestCard(details) {
@@ -1219,7 +1245,7 @@
                 sortedByVotes.slice(0, 4).forEach(articleDetail => {
                     frag.append(render.trendingArticleCard({
                         ...articleDetail,
-                        heroImage: allImages[articleDetail.uid] ? allImages[articleDetail.uid].heroImage.thumbnail : ''
+                        // heroImage: allImages[articleDetail.uid] ? allImages[articleDetail.uid].heroImage.thumbnail : ''
                     }))
                 })
                 getRef('trending_article_container').innerHTML = ''
@@ -1229,7 +1255,7 @@
                 sortedArticles.slice(0, 4).forEach(articleDetail => {
                     frag.append(render.articleCard({
                         ...articleDetail,
-                        heroImage: allImages[articleDetail.uid] ? allImages[articleDetail.uid].heroImage.thumbnail : ''
+                        // heroImage: allImages[articleDetail.uid] ? allImages[articleDetail.uid].heroImage.thumbnail : ''
                     }))
                 })
                 getRef('latest_articles_list').innerHTML = ''
@@ -1295,7 +1321,7 @@
                 }
                 randomNumbers.forEach((index) => {
                     const { uid } = searchResult[index]
-                    frag.append(render.articleCard({ ...searchResult[index], heroImage: allImages[uid] ? allImages[uid].heroImage.thumbnail : '' }))
+                    frag.append(render.articleCard({ ...searchResult[index], /* heroImage: allImages[uid] ? allImages[uid].heroImage.thumbnail : '' */ }))
                 })
                 getRef('related_articles').innerHTML = ''
                 getRef('related_articles').append(frag)
@@ -1380,13 +1406,11 @@
             },
         }
 
+        let mappedImages = {}
         const getArticles = async () => {
-            floCloudAPI.requestApplicationData('images').then((images) => {
-                for (const articleID in floGlobals.appObjects.rmTimes.articles) {
-                    const { heroImage } = floGlobals.appObjects.rmTimes.articles[articleID]
-                    compactIDB.writeData('images', {
-                        heroImage: images[heroImage].message,
-                    }, articleID)
+            compactIDB.readAllData('images').then(allImages => {
+                for (const imageID in allImages) {
+                    mappedImages[imageID] = true
                 }
             })
             Promise.all([
@@ -1915,6 +1939,8 @@
             const isPublished = floGlobals.appObjects.rmTimes.articles.hasOwnProperty(articleID)
             getConfirmation(`${isPublished ? 'Update' : 'Publish'} article?`).then(async res => {
                 if (res) {
+                    getRef('set_article_meta').innerHTML = '<sm-spinner></sm-spinner>'
+                    getRef('set_article_meta').disabled = true
                     const { title, categories, summary, published, tags, contributors, heroImage } = getArticleMetaData()
                     floGlobals.appObjects.adminData.publishedVc[vectorClock] = true
                     floGlobals.appObjects.articlesContent[articleID] = content
@@ -1931,15 +1957,20 @@
                     floGlobals.appObjects.rmTimes.articles[articleID].categories = categories
                     floGlobals.appObjects.rmTimes.articles[articleID].contributors = contributors
                     floGlobals.appObjects.rmTimes.articles[articleID].title = title
-                    floGlobals.appObjects.rmTimes.articles[articleID].heroImage = heroImage
                     floGlobals.appObjects.rmTimes.articles[articleID].tags = tags
                     floGlobals.appObjects.rmTimes.articles[articleID].readTime = readTime
                     floGlobals.appObjects.rmTimes.articles[articleID].summary = summary
-                    // compactIDB.writeData('images', { heroImage }, articleID)
-                    // const response = await floCloudAPI.sendApplicationData(heroImage, 'images')
-                    // for (const key in response) {
-                    //     floGlobals.appObjects.rmTimes.articles[articleID].heroImage = response[key].vectorClock
-                    // }
+                    if (heroImage.hasOwnProperty('full')) {
+                        try {
+                            compactIDB.writeData('images', { heroImage }, articleID)
+                            const response = await floCloudAPI.sendApplicationData(heroImage, 'images')
+                            for (const key in response) {
+                                floGlobals.appObjects.rmTimes.articles[articleID].heroImage = response[key].vectorClock
+                            }
+                        } catch (err) {
+                            console.log(err)
+                        }
+                    }
                     Promise.all([
                         floCloudAPI.updateObjectData('rmTimes'),
                         floCloudAPI.updateObjectData('adminData'),
@@ -1951,6 +1982,12 @@
                         }
                         document.querySelector(`.request-card[data-vc="${vc}"]`).remove()
                         hidePopup()
+                    }).catch(err => {
+                        notify(`${isPublished ? 'Update' : 'Publish'} article failed`, 'error')
+                        console.error(err)
+                    }).finally(() => {
+                        getRef('set_article_meta').textContent = `${isPublished ? 'Update' : 'Publish'}`
+                        getRef('set_article_meta').disabled = false
                     })
                 }
             })
@@ -2010,15 +2047,14 @@
         }
 
         async function setArticleMetaData(details, articleID) {
-            const { categories, title, tags, summary, published, contributors, heroImage } = details
-            // const articleImages = await compactIDB.readData('images', articleID)
-            // if (articleImages) {
-            //     getRef('preview_image').src = articleImages.heroImage.thumbnail
-            //     getRef('select_image').value = '';
-            // } else {
-            //     getRef('preview_image').src = ''
-            // }
-            getRef('get_hero_image').value = heroImage
+            const { categories, title, tags, summary, published, contributors } = details
+            const articleImages = await compactIDB.readData('images', articleID)
+            if (articleImages) {
+                getRef('preview_image').src = articleImages.heroImage.thumbnail
+                getRef('select_image').value = '';
+            } else {
+                getRef('preview_image').src = ''
+            }
             getRef('edit_title').value = title;
             getRef('edit_summary').value = summary || '';
             setSelectedCategories(categories || '');
@@ -2031,7 +2067,7 @@
             return {
                 title: getRef('edit_title').value.trim(),
                 categories: getSelectedCategories(),
-                heroImage: getRef('get_hero_image').value.trim(),
+                heroImage: currentSelectedImage,
                 summary: getRef('edit_summary').value.trim(),
                 published: new Date(getRef('edit_published').value).getTime(),
                 contributors: getRef('edit_contributors').value,
@@ -2076,21 +2112,34 @@
         function updateArticleMetaData(articleID) {
             getConfirmation('Update article meta data?').then(async res => {
                 if (res) {
+                    getRef('set_article_meta').innerHTML = '<sm-spinner></sm-spinner>'
+                    getRef('set_article_meta').disabled = true
                     const { title, categories, summary, published, tags, contributors, heroImage } = getArticleMetaData()
                     floGlobals.appObjects.rmTimes.articles[articleID].categories = categories
                     floGlobals.appObjects.rmTimes.articles[articleID].title = title
-                    floGlobals.appObjects.rmTimes.articles[articleID].heroImage = heroImage
                     floGlobals.appObjects.rmTimes.articles[articleID].tags = tags
                     floGlobals.appObjects.rmTimes.articles[articleID].summary = summary
                     floGlobals.appObjects.rmTimes.articles[articleID].contributors = contributors
-                    // compactIDB.writeData('images', { heroImage }, articleID)
-                    // const response = await floCloudAPI.sendApplicationData(heroImage, 'images')
-                    // for (const key in response) {
-                    //     floGlobals.appObjects.rmTimes.articles[articleID].heroImage = response[key].vectorClock
-                    // }
+                    if (heroImage.hasOwnProperty('full')) {
+                        try {
+                            compactIDB.writeData('images', { heroImage }, articleID)
+                            const response = await floCloudAPI.sendApplicationData(heroImage, 'images')
+                            for (const key in response) {
+                                floGlobals.appObjects.rmTimes.articles[articleID].heroImage = response[key].vectorClock
+                            }
+                        } catch (e) {
+                            notify(`Error uploading image`, 'error')
+                            console.error(e)
+                        }
+                    }
                     floCloudAPI.updateObjectData('rmTimes').then(() => {
                         notify(`Updated article meta data`, 'success')
                         hidePopup()
+                    }).catch(err => {
+                        notify(`Error updating article meta data: ${err}`, 'error')
+                    }).finally(() => {
+                        getRef('set_article_meta').textContent = 'UPDATE'
+                        getRef('set_article_meta').disabled = false
                     })
                 }
             })
@@ -2283,44 +2332,44 @@
             }
         }
 
-        // let currentSelectedImage = {}
-        // getRef('select_image').addEventListener('change', function (e) {
-        //     currentSelectedImage = {}
-        //     if (this.files.length === 0) return
-        //     const selectedFile = this.files[0]
-        //     const reader = new FileReader();
-        //     reader.onload = function (e) {
-        //         // show selected image in the preview
-        //         getRef('preview_image').src = e.target.result;
-        //         getRef('preview_image').addEventListener('load', function (event) {
-        //             // Dynamically create a canvas element
-        //             const canvas = createElement("canvas");
-        //             const context = canvas.getContext("2d");
-        //             const originalWidth = getRef('preview_image').width;
-        //             const originalHeight = getRef('preview_image').height;
-        //             const resizingFactor = parseFloat((1 / (originalWidth / 600)).toFixed(2));
+        let currentSelectedImage = {}
+        getRef('select_image').addEventListener('change', function (e) {
+            currentSelectedImage = {}
+            if (this.files.length === 0) return
+            const selectedFile = this.files[0]
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                // show selected image in the preview
+                getRef('preview_image').src = e.target.result;
+                getRef('preview_image').addEventListener('load', function (event) {
+                    // Dynamically create a canvas element
+                    const canvas = createElement("canvas");
+                    const context = canvas.getContext("2d");
+                    const originalWidth = getRef('preview_image').width;
+                    const originalHeight = getRef('preview_image').height;
+                    const resizingFactor = parseFloat((1 / (originalWidth / 600)).toFixed(2));
 
-        //             const canvasWidth = originalWidth * resizingFactor;
-        //             const canvasHeight = originalHeight * resizingFactor;
+                    const canvasWidth = originalWidth * resizingFactor;
+                    const canvasHeight = originalHeight * resizingFactor;
 
-        //             canvas.width = canvasWidth;
-        //             canvas.height = canvasHeight;
+                    canvas.width = canvasWidth;
+                    canvas.height = canvasHeight;
 
-        //             context.drawImage(
-        //                 getRef('preview_image'),
-        //                 0,
-        //                 0,
-        //                 originalWidth * resizingFactor,
-        //                 originalHeight * resizingFactor
-        //             );
-        //             currentSelectedImage['thumbnail'] = canvas.toDataURL(selectedFile.type);
-        //         }, { once: true });
-        //         currentSelectedImage.name = selectedFile.name
-        //         currentSelectedImage.type = selectedFile.type
-        //         currentSelectedImage.full = e.target.result
-        //     }
-        //     reader.readAsDataURL(this.files[0]);
-        // })
+                    context.drawImage(
+                        getRef('preview_image'),
+                        0,
+                        0,
+                        originalWidth * resizingFactor,
+                        originalHeight * resizingFactor
+                    );
+                    currentSelectedImage['thumbnail'] = canvas.toDataURL(selectedFile.type);
+                }, { once: true });
+                currentSelectedImage.name = selectedFile.name
+                currentSelectedImage.type = selectedFile.type
+                currentSelectedImage.full = e.target.result
+            }
+            reader.readAsDataURL(this.files[0]);
+        })
 
     </script>
     <script id="onLoadStartUp">
