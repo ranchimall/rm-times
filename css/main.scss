@@ -772,7 +772,6 @@ theme-toggle {
   z-index: 5;
 }
 #article_map_container {
-  margin-top: 1.5rem;
   display: grid;
   gap: 0.5rem;
   button {
@@ -1108,6 +1107,9 @@ theme-toggle {
       padding: 0 1.5rem;
     }
   }
+  #article_map_container {
+    padding: 1rem 0;
+  }
   .writer-card {
     .writer-profile {
       height: 2.5rem;
@@ -1215,6 +1217,7 @@ theme-toggle {
     overflow-y: overlay;
   }
   #article_map_container {
+    margin-top: 1.5rem;
     margin-bottom: 3rem;
   }
   .heading-shortcut {

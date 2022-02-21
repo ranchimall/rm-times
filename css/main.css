@@ -817,7 +817,6 @@ theme-toggle {
 }
 
 #article_map_container {
-  margin-top: 1.5rem;
   display: grid;
   gap: 0.5rem;
 }
@@ -1170,6 +1169,10 @@ theme-toggle {
     padding: 0 1.5rem;
   }
 
+  #article_map_container {
+    padding: 1rem 0;
+  }
+
   .writer-card .writer-profile {
     height: 2.5rem;
     width: 2.5rem;
@@ -1291,6 +1294,7 @@ theme-toggle {
   }
 
   #article_map_container {
+    margin-top: 1.5rem;
     margin-bottom: 3rem;
   }
 

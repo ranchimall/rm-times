@@ -1128,7 +1128,7 @@
         // checks if an article image is already fetched and if not, fetches it and returns the image
         const getImage = (articleID) => new Promise((resolve, reject) => {
             const { heroImage: heroImageVC } = floGlobals.appObjects.rmTimes.articles[articleID]
-            if (mappedImages.hasOwnProperty(articleID)) {
+            if (mappedImages.hasOwnProperty(articleID) && mappedImages[articleID] === heroImageVC) {
                 compactIDB.readData('images', articleID).then(image => {
                     if (image) {
                         resolve(image.heroImage)
@@ -1140,8 +1140,9 @@
                 }).then(result => {
                     compactIDB.writeData('images', {
                         heroImage: result[heroImageVC].message,
+                        heroImageVC
                     }, articleID)
-                    mappedImages[articleID] = true
+                    mappedImages[articleID] = heroImageVC
                     resolve(result[heroImageVC].message)
                 })
             }
@@ -1412,7 +1413,7 @@
         const getArticles = async () => {
             compactIDB.readAllData('images').then(allImages => {
                 for (const imageID in allImages) {
-                    mappedImages[imageID] = true
+                    mappedImages[imageID] = allImages[imageID].heroImageVC
                 }
             })
             Promise.all([
