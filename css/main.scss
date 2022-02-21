@@ -116,8 +116,9 @@ button,
 }
 .cta {
   text-transform: uppercase;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
+  letter-spacing: 0.05em;
 }
 .icon-only {
   padding: 0.5rem;
@@ -151,13 +152,14 @@ sm-button {
       fill: rgba(var(--text-color), 0.6);
     }
   }
-  &.uppercase {
-    letter-spacing: 0.05em;
-  }
   &.danger {
     --background: var(--danger-color);
     color: rgba(var(--background-color), 1);
   }
+}
+sm-spinner {
+  --size: 1rem;
+  --stroke-width: 0.1rem;
 }
 ul {
   list-style: none;

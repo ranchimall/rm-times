@@ -1457,12 +1457,11 @@ spinner.innerHTML = `
 }
 :host{
     --accent-color: #4d2588;
-    --height: 1.6rem;
-    --width: 1.6rem;
+    --size: 1.6rem;
 }
 .loader {
-    height: var(--height);
-    width: var(--weight);
+    height: var(--size);
+    width: var(--size);
     stroke-width: 8;
     overflow: visible;
     stroke: var(--accent-color);

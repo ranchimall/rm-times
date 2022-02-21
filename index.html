@@ -460,7 +460,7 @@
                     <fieldset id="edit_category"></fieldset>
                 </div>
                 <label class="grid gap-0-5">
-                    <h5>Hero image URL</h5>
+                    <h5>Hero Image</h5>
                     <img src="" alt="" id="preview_image">
                     <input id="select_image" type="file" accept="image">
                 </label>
@@ -482,8 +482,10 @@
                     <h5>Publishing date</h5>
                     <input type="datetime-local" id="edit_published">
                 </label>
-                <sm-button id="set_article_meta" class="cta" onclick="defineArticle()" variant="primary">Save
-                </sm-button>
+                <div class="flex align-center w-100">
+                    <button id="set_article_meta" class="button button--primary cta w-100"
+                        onclick="defineArticle()">Save</button>
+                </div>
             </div>
         </section>
     </sm-popup>
@@ -1934,13 +1936,46 @@
             getRef('edit_category').append(frag)
         }
 
+
+        function showLoader(loadingText) {
+            const animOptions = {
+                fill: 'forwards',
+                duration: 150,
+                ease: 'easing',
+            }
+            animateTo(getRef('set_article_meta'), slideOutUp, animOptions)
+                .onfinish = () => {
+                    getRef('set_article_meta').disabled = true
+                    getRef('set_article_meta').classList.add('hide')
+                    const loader = createElement('div', {
+                        className: 'flex align-center justify-center gap-0-5 cta w-100',
+                        innerHTML: `<sm-spinner></sm-spinner> ${loadingText}`
+                    })
+                    getRef('set_article_meta').after(loader)
+                    animateTo(loader, slideInUp, animOptions)
+                }
+        }
+        function hideLoader(loadingText) {
+            const animOptions = {
+                fill: 'forwards',
+                duration: 150,
+                ease: 'easing',
+            }
+            animateTo(getRef('set_article_meta').nextElementSibling, slideOutUp, animOptions)
+                .onfinish = () => {
+                    getRef('set_article_meta').disabled = false
+                    getRef('set_article_meta').textContent = loadingText
+                    getRef('set_article_meta').nextElementSibling.remove()
+                    getRef('set_article_meta').classList.remove('hide')
+                    animateTo(getRef('set_article_meta'), slideInUp, animOptions)
+                }
+        }
         function publishArticle(vc) {
             const { message: { articleID, content, contributors, title, readTime }, vectorClock } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc];
             const isPublished = floGlobals.appObjects.rmTimes.articles.hasOwnProperty(articleID)
             getConfirmation(`${isPublished ? 'Update' : 'Publish'} article?`).then(async res => {
                 if (res) {
-                    getRef('set_article_meta').innerHTML = '<sm-spinner></sm-spinner>'
-                    getRef('set_article_meta').disabled = true
+                    showLoader(` ${isPublished ? 'UPDATING...' : 'PUBLISHING...'}`)
                     const { title, categories, summary, published, tags, contributors, heroImage } = getArticleMetaData()
                     floGlobals.appObjects.adminData.publishedVc[vectorClock] = true
                     floGlobals.appObjects.articlesContent[articleID] = content
@@ -1983,11 +2018,10 @@
                         document.querySelector(`.request-card[data-vc="${vc}"]`).remove()
                         hidePopup()
                     }).catch(err => {
-                        notify(`${isPublished ? 'Update' : 'Publish'} article failed`, 'error')
+                        notify(`${isPublished ? 'UPDATE' : 'PUBLISH'} article failed`, 'error')
                         console.error(err)
                     }).finally(() => {
-                        getRef('set_article_meta').textContent = `${isPublished ? 'Update' : 'Publish'}`
-                        getRef('set_article_meta').disabled = false
+                        hideLoader(` ${isPublished ? 'UPDATE' : 'PUBLISH'}`)
                     })
                 }
             })
@@ -2112,8 +2146,7 @@
         function updateArticleMetaData(articleID) {
             getConfirmation('Update article meta data?').then(async res => {
                 if (res) {
-                    getRef('set_article_meta').innerHTML = '<sm-spinner></sm-spinner>'
-                    getRef('set_article_meta').disabled = true
+                    showLoader('UPDATING...')
                     const { title, categories, summary, published, tags, contributors, heroImage } = getArticleMetaData()
                     floGlobals.appObjects.rmTimes.articles[articleID].categories = categories
                     floGlobals.appObjects.rmTimes.articles[articleID].title = title
@@ -2138,8 +2171,7 @@
                     }).catch(err => {
                         notify(`Error updating article meta data: ${err}`, 'error')
                     }).finally(() => {
-                        getRef('set_article_meta').textContent = 'UPDATE'
-                        getRef('set_article_meta').disabled = false
+                        hideLoader('UPDATE')
                     })
                 }
             })
@@ -2391,7 +2423,6 @@
                     getRef('writers_list').addEventListener('click', handleWritersClick);
                     getRef('approved_ids').addEventListener('click', handleApprovedIDsClick);
                     document.querySelectorAll('.admin-option').forEach(elem => elem.classList.remove('hide'));
-                    location.hash = '#/dashboard'
                 } else {
                     getRef('publishing_requests').removeEventListener('click', handleRequestClick)
                     getRef('article_analytics').removeEventListener('click', handleAnalyticsClick);
