@@ -292,7 +292,6 @@ border: none;
     --danger-color: red;
     --width: 100%;
     --icon-gap: 0.5rem;
-    --border-radius: 0.3rem;
     --background: rgba(var(--text-color, (17,17,17)), 0.06);
 }
 .hide{
@@ -328,7 +327,7 @@ button:focus{
     position: relative;
     gap: var(--icon-gap);
     padding: var(--padding, 0.6rem 0.8rem);
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius,0.3rem);
     transition: opacity 0.3s, box-shadow 0.2s;
     background: var(--background);
     width: 100%;
@@ -355,7 +354,6 @@ button:focus{
     font-size: inherit;
     opacity: .7;
     font-weight: 400;
-    top: 0;
     transition: -webkit-transform 0.3s;
     transition: transform 0.3s;
     transition: transform 0.3s, -webkit-transform 0.3s, color .03;
@@ -384,19 +382,20 @@ input{
     border: none;
     background: transparent;
     outline: none;
-    color: rgba(var(--text-color, (17,17,17)), 1);
+    color: inherit;
+    font-family: inherit;
     width: 100%;
     caret-color: var(--accent-color, teal);
 }
 :host([animate]) .input:focus-within .container input,
-.animate-label .container input {
+.animate-placeholder .container input {
     -webkit-transform: translateY(0.6rem);
             -ms-transform: translateY(0.6rem);
         transform: translateY(0.6rem);
     }
   
     :host([animate]) .input:focus-within .label,
-    .animate-label .label {
+    .animate-placeholder .label {
     -webkit-transform: translateY(-0.7em) scale(0.8);
             -ms-transform: translateY(-0.7em) scale(0.8);
         transform: translateY(-0.7em) scale(0.8);
@@ -407,7 +406,7 @@ input{
     box-shadow: 0 0 0 1px var(--border-color, rgba(var(--text-color, (17,17,17)), 0.3)) inset;
     background: rgba(var(--background-color, (255,255,255)), 1);
 }
-.animate-label:focus-within:not(.readonly) .label{
+.animate-placeholder:focus-within:not(.readonly) .label{
     color: var(--accent-color,teal)
 }
 .feedback-text:not(:empty){
@@ -446,7 +445,7 @@ input{
         <div class="container">
             <input type="text"/>
             <div part="placeholder" class="label"></div>
-            <button class="clear hide" title="Clear">
+            <button class="clear hide" title="Clear" tabindex="-1">
                 <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-11.414L9.172 7.757 7.757 9.172 10.586 12l-2.829 2.828 1.415 1.415L12 13.414l2.828 2.829 1.415-1.415L13.414 12l2.829-2.828-1.415-1.415L12 10.586z"/></svg>
             </button>
         </div>
@@ -607,12 +606,12 @@ customElements.define('sm-input',
             if (!this.hasAttribute('placeholder') || this.getAttribute('placeholder').trim() === '') return;
             if (this.input.value !== '') {
                 if (this.animate)
-                    this.inputParent.classList.add('animate-label');
+                    this.inputParent.classList.add('animate-placeholder');
                 else
                     this.label.classList.add('hide');
             } else {
                 if (this.animate)
-                    this.inputParent.classList.remove('animate-label');
+                    this.inputParent.classList.remove('animate-placeholder');
                 else
                     this.label.classList.remove('hide');
                 this.feedbackText.textContent = '';
