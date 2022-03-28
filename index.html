@@ -456,11 +456,18 @@
                     <h5>Select category</h5>
                     <fieldset id="edit_category"></fieldset>
                 </div>
-                <label class="grid gap-0-5">
+                <div class="grid gap-0-5">
+                    <h5>Hero image</h5>
+                    <!-- <img src="" alt="" id="preview_image"> -->
+                    <sm-input id="select_full_image" placeholder="High-res image name" animate></sm-input>
+                    <sm-input id="select_thumbnail_image" placeholder="Thumbnail image name" animate></sm-input>
+                </div>
+
+                <!-- <label class="grid gap-0-5">
                     <h5>Hero Image</h5>
                     <img src="" alt="" id="preview_image">
                     <input id="select_image" type="file" accept="image">
-                </label>
+                </label> -->
             </div>
             <div class="grid gap-1-5">
                 <div class="grid gap-0-5">
@@ -1147,7 +1154,7 @@
         })
         const render = {
             articleCard(details) {
-                const { uid: articleID, categories, title, readTime, published } = details
+                const { uid: articleID, categories, title, readTime, published, heroImage } = details
                 const clone = getRef('article_card_template').content.cloneNode(true).firstElementChild
                 const frag = document.createDocumentFragment()
                 categories.forEach(category => {
@@ -1162,14 +1169,15 @@
                 clone.querySelector('.article-card__title').textContent = title
                 clone.querySelector('.article-card__read-time').textContent = `${readTime} Min read`
                 clone.querySelector('.article-card__published').textContent = relativeTime.from(published)
-                getImage(articleID).then(image => {
-                    if (image.thumbnail)
-                        clone.querySelector('.article-card__image').src = image.thumbnail
-                })
+                clone.querySelector('.article-card__image').src = `./images/${heroImage.thumbnail}`
+                // getImage(articleID).then(image => {
+                //     if (image.thumbnail)
+                //         clone.querySelector('.article-card__image').src = image.thumbnail
+                // })
                 return clone
             },
             trendingArticleCard(details) {
-                const { uid: articleID, categories, title, readTime, published, summary } = details
+                const { uid: articleID, categories, title, readTime, published, summary, heroImage } = details
                 const clone = getRef('trending_article_template').content.cloneNode(true).firstElementChild
                 const frag = document.createDocumentFragment()
                 categories.forEach(category => {
@@ -1185,10 +1193,11 @@
                 clone.querySelector('.trending-article__read-time').textContent = `${readTime} Min read`
                 clone.querySelector('.trending-article__published').textContent = relativeTime.from(published)
                 clone.querySelector('.trending-article__summary').textContent = summary
-                getImage(articleID).then(image => {
-                    if (image.thumbnail)
-                        clone.querySelector('.trending-article__image').src = image.thumbnail
-                })
+                clone.querySelector('.trending-article__image').src = heroImage ? heroImage.thumbnail : ''
+                // getImage(articleID).then(image => {
+                //     if (image.thumbnail)
+                //         clone.querySelector('.trending-article__image').src = image.thumbnail
+                // })
                 return clone
             },
             requestCard(details) {
@@ -1264,8 +1273,9 @@
             },
             async article(articleID, firstLoad = true) {
                 const frag = document.createDocumentFragment()
-                const [allArticles, allImages] = await Promise.all([compactIDB.readData('appObjects', 'articlesContent'), compactIDB.readAllData('images')])
-                const { title, published, readTime, contributors, updated, summary, categories } = floGlobals.appObjects.rmTimes.articles[articleID]
+                // const [allArticles, allImages] = await Promise.all([compactIDB.readData('appObjects', 'articlesContent'), compactIDB.readAllData('images')])
+                const allArticles = await compactIDB.readData('appObjects', 'articlesContent');
+                const { title, published, readTime, contributors, updated, summary, categories, heroImage } = floGlobals.appObjects.rmTimes.articles[articleID]
                 categories.forEach(category => {
                     frag.append(createElement('a', {
                         className: 'article-card__category interact',
@@ -1279,7 +1289,7 @@
                 getRef('article_summary').textContent = summary
                 getRef('published_time').textContent = `${getFormattedTime(published, 'date-only')}${updated ? `, Updated ${relativeTime.from(updated)}` : ''}`
                 getRef('reading_time').textContent = `${readTime} Min read`
-                getRef('article_image').src = allImages[articleID] ? allImages[articleID].heroImage.full : ''
+                getRef('article_image').src = heroImage.full
                 getRef('article_body').innerHTML = DOMPurify.sanitize(allArticles[articleID])
                 const allHeadings = getRef('article_body').querySelectorAll('h3')
                 allHeadings.forEach(heading => {
@@ -1994,17 +2004,18 @@
                     floGlobals.appObjects.rmTimes.articles[articleID].tags = tags
                     floGlobals.appObjects.rmTimes.articles[articleID].readTime = readTime
                     floGlobals.appObjects.rmTimes.articles[articleID].summary = summary
-                    if (heroImage.hasOwnProperty('full')) {
-                        try {
-                            compactIDB.writeData('images', { heroImage }, articleID)
-                            const response = await floCloudAPI.sendApplicationData(heroImage, 'images')
-                            for (const key in response) {
-                                floGlobals.appObjects.rmTimes.articles[articleID].heroImage = response[key].vectorClock
-                            }
-                        } catch (err) {
-                            console.log(err)
-                        }
-                    }
+                    floGlobals.appObjects.rmTimes.articles[articleID].heroImage = heroImage
+                    // if (heroImage.hasOwnProperty('full')) {
+                    //     try {
+                    //         compactIDB.writeData('images', { heroImage }, articleID)
+                    //         const response = await floCloudAPI.sendApplicationData(heroImage, 'images')
+                    //         for (const key in response) {
+                    //             floGlobals.appObjects.rmTimes.articles[articleID].heroImage = response[key].vectorClock
+                    //         }
+                    //     } catch (err) {
+                    //         console.log(err)
+                    //     }
+                    // }
                     Promise.all([
                         floCloudAPI.updateObjectData('rmTimes'),
                         floCloudAPI.updateObjectData('adminData'),
@@ -2080,13 +2091,14 @@
         }
 
         async function setArticleMetaData(details, articleID) {
-            const { categories, title, tags, summary, published, contributors } = details
-            const articleImages = await compactIDB.readData('images', articleID)
-            if (articleImages) {
-                getRef('preview_image').src = articleImages.heroImage.thumbnail
-                getRef('select_image').value = '';
+            const { categories, title, tags, summary, published, contributors, heroImage } = details
+            // const articleImages = await compactIDB.readData('images', articleID)
+            if (heroImage && heroImage.hasOwnProperty('full')) {
+                // getRef('preview_image').src = `./images/${heroImage}`
+                getRef('select_full_image').value = '';
+                getRef('select_thumbnail_image').value = '';
             } else {
-                getRef('preview_image').src = ''
+                // getRef('preview_image').src = ''
             }
             getRef('edit_title').value = title;
             getRef('edit_summary').value = summary || '';
@@ -2100,7 +2112,10 @@
             return {
                 title: getRef('edit_title').value.trim(),
                 categories: getSelectedCategories(),
-                heroImage: currentSelectedImage,
+                heroImage: {
+                    full: getRef('select_full_image').value,
+                    thumbnail: getRef('select_thumbnail_image').value,
+                },
                 summary: getRef('edit_summary').value.trim(),
                 published: new Date(getRef('edit_published').value).getTime(),
                 contributors: getRef('edit_contributors').value,
@@ -2152,18 +2167,19 @@
                     floGlobals.appObjects.rmTimes.articles[articleID].tags = tags
                     floGlobals.appObjects.rmTimes.articles[articleID].summary = summary
                     floGlobals.appObjects.rmTimes.articles[articleID].contributors = contributors
-                    if (heroImage.hasOwnProperty('full')) {
-                        try {
-                            compactIDB.writeData('images', { heroImage }, articleID)
-                            const response = await floCloudAPI.sendApplicationData(heroImage, 'images')
-                            for (const key in response) {
-                                floGlobals.appObjects.rmTimes.articles[articleID].heroImage = response[key].vectorClock
-                            }
-                        } catch (e) {
-                            notify(`Error uploading image`, 'error')
-                            console.error(e)
-                        }
-                    }
+                    floGlobals.appObjects.rmTimes.articles[articleID].heroImage = heroImage
+                    // if (heroImage.hasOwnProperty('full')) {
+                    //     try {
+                    //         compactIDB.writeData('images', { heroImage }, articleID)
+                    //         const response = await floCloudAPI.sendApplicationData(heroImage, 'images')
+                    //         for (const key in response) {
+                    //             floGlobals.appObjects.rmTimes.articles[articleID].heroImage = response[key].vectorClock
+                    //         }
+                    //     } catch (e) {
+                    //         notify(`Error uploading image`, 'error')
+                    //         console.error(e)
+                    //     }
+                    // }
                     floCloudAPI.updateObjectData('rmTimes').then(() => {
                         notify(`Updated article meta data`, 'success')
                         hidePopup()
@@ -2364,43 +2380,43 @@
         }
 
         let currentSelectedImage = {}
-        getRef('select_image').addEventListener('change', function (e) {
-            currentSelectedImage = {}
-            if (this.files.length === 0) return
-            const selectedFile = this.files[0]
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                // show selected image in the preview
-                getRef('preview_image').src = e.target.result;
-                getRef('preview_image').addEventListener('load', function (event) {
-                    // Dynamically create a canvas element
-                    const canvas = createElement("canvas");
-                    const context = canvas.getContext("2d");
-                    const originalWidth = getRef('preview_image').width;
-                    const originalHeight = getRef('preview_image').height;
-                    const resizingFactor = parseFloat((1 / (originalWidth / 600)).toFixed(2));
+        // getRef('select_image').addEventListener('change', function (e) {
+        //     currentSelectedImage = {}
+        //     if (this.files.length === 0) return
+        //     const selectedFile = this.files[0]
+        //     const reader = new FileReader();
+        //     reader.onload = function (e) {
+        //         // show selected image in the preview
+        //         getRef('preview_image').src = e.target.result;
+        //         getRef('preview_image').addEventListener('load', function (event) {
+        //             // Dynamically create a canvas element
+        //             const canvas = createElement("canvas");
+        //             const context = canvas.getContext("2d");
+        //             const originalWidth = getRef('preview_image').width;
+        //             const originalHeight = getRef('preview_image').height;
+        //             const resizingFactor = parseFloat((1 / (originalWidth / 600)).toFixed(2));
 
-                    const canvasWidth = originalWidth * resizingFactor;
-                    const canvasHeight = originalHeight * resizingFactor;
+        //             const canvasWidth = originalWidth * resizingFactor;
+        //             const canvasHeight = originalHeight * resizingFactor;
 
-                    canvas.width = canvasWidth;
-                    canvas.height = canvasHeight;
+        //             canvas.width = canvasWidth;
+        //             canvas.height = canvasHeight;
 
-                    context.drawImage(
-                        getRef('preview_image'),
-                        0,
-                        0,
-                        originalWidth * resizingFactor,
-                        originalHeight * resizingFactor
-                    );
-                    currentSelectedImage['thumbnail'] = canvas.toDataURL(selectedFile.type);
-                }, { once: true });
-                currentSelectedImage.name = selectedFile.name
-                currentSelectedImage.type = selectedFile.type
-                currentSelectedImage.full = e.target.result
-            }
-            reader.readAsDataURL(this.files[0]);
-        })
+        //             context.drawImage(
+        //                 getRef('preview_image'),
+        //                 0,
+        //                 0,
+        //                 originalWidth * resizingFactor,
+        //                 originalHeight * resizingFactor
+        //             );
+        //             currentSelectedImage['thumbnail'] = canvas.toDataURL(selectedFile.type);
+        //         }, { once: true });
+        //         currentSelectedImage.name = selectedFile.name
+        //         currentSelectedImage.type = selectedFile.type
+        //         currentSelectedImage.full = e.target.result
+        //     }
+        //     reader.readAsDataURL(this.files[0]);
+        // })
 
     </script>
     <script id="onLoadStartUp">
