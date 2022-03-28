@@ -1169,7 +1169,7 @@
                 clone.querySelector('.article-card__title').textContent = title
                 clone.querySelector('.article-card__read-time').textContent = `${readTime} Min read`
                 clone.querySelector('.article-card__published').textContent = relativeTime.from(published)
-                clone.querySelector('.article-card__image').src = `./images/${heroImage.thumbnail}`
+                clone.querySelector('.article-card__image').src = heroImage ? `./images/${heroImage.thumbnail}` : ''
                 // getImage(articleID).then(image => {
                 //     if (image.thumbnail)
                 //         clone.querySelector('.article-card__image').src = image.thumbnail
@@ -1289,7 +1289,7 @@
                 getRef('article_summary').textContent = summary
                 getRef('published_time').textContent = `${getFormattedTime(published, 'date-only')}${updated ? `, Updated ${relativeTime.from(updated)}` : ''}`
                 getRef('reading_time').textContent = `${readTime} Min read`
-                getRef('article_image').src = heroImage.full
+                getRef('article_image').src = heroImage ? `./images/${heroImage.full}` : ''
                 getRef('article_body').innerHTML = DOMPurify.sanitize(allArticles[articleID])
                 const allHeadings = getRef('article_body').querySelectorAll('h3')
                 allHeadings.forEach(heading => {
