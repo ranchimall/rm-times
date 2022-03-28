@@ -1193,7 +1193,7 @@
                 clone.querySelector('.trending-article__read-time').textContent = `${readTime} Min read`
                 clone.querySelector('.trending-article__published').textContent = relativeTime.from(published)
                 clone.querySelector('.trending-article__summary').textContent = summary
-                clone.querySelector('.trending-article__image').src = heroImage ? heroImage.thumbnail : ''
+                clone.querySelector('.trending-article__image').src = heroImage ? `./images/${heroImage.thumbnail}` : ''
                 // getImage(articleID).then(image => {
                 //     if (image.thumbnail)
                 //         clone.querySelector('.trending-article__image').src = image.thumbnail
