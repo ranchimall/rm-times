@@ -290,7 +290,6 @@ border: none;
     display: flex;
     --success-color: #00C853;
     --danger-color: red;
-    --width: 100%;
     --icon-gap: 0.5rem;
     --background: rgba(var(--text-color, (17,17,17)), 0.06);
 }
@@ -310,8 +309,8 @@ button:focus{
     outline: var(--accent-color, teal) solid medium;
 }
 .icon {
-    height: 1.4rem;
-    width: 1.4rem;
+    height: 1.2rem;
+    width: 1.2rem;
     fill: rgba(var(--text-color, (17,17,17)), 0.6);
 }
 
@@ -326,13 +325,12 @@ button:focus{
             align-items: center;
     position: relative;
     gap: var(--icon-gap);
-    padding: var(--padding, 0.6rem 0.8rem);
+    padding: var(--padding, 0.8rem);
     border-radius: var(--border-radius,0.3rem);
     transition: opacity 0.3s, box-shadow 0.2s;
     background: var(--background);
     width: 100%;
     outline: none;
-    min-height: 3.5rem;
 }
 .input.readonly .clear{
     opacity: 0 !important;
@@ -367,7 +365,7 @@ button:focus{
 }
 .outer-container{
     position: relative;
-    width: var(--width);
+    width: 100%;
 }
 .container{
     width: 100%;

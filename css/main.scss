@@ -132,6 +132,9 @@ button:disabled {
 a:any-link:focus-visible {
   outline: rgba(var(--text-color), 1) 0.1rem solid;
 }
+sm-input {
+  --padding: 1rem;
+}
 
 sm-input,
 sm-textarea,
@@ -612,6 +615,7 @@ sm-copy {
 #search_articles {
   --border-radius: 0.5em;
   width: 100%;
+  --padding: 0.6rem;
 }
 theme-toggle {
   margin-left: auto;
@@ -1176,7 +1180,7 @@ theme-toggle {
   }
   #expanding_search {
     margin: 1rem 1.5rem;
-    width: 20rem;
+    width: 18rem;
   }
   #search_suggestions {
     top: calc(100% + 1rem);
