@@ -484,7 +484,7 @@
                 </div>
                 <label class="grid gap-0-5">
                     <h5>Publishing date</h5>
-                    <input type="datetime-local" id="edit_published">
+                    <input type="date" id="edit_published">
                 </label>
                 <div class="flex align-center w-100">
                     <button id="set_article_meta" class="button button--primary cta w-100"
@@ -1992,7 +1992,7 @@
                         floGlobals.appObjects.rmTimes.articles[articleID]['updated'] = Date.now();
                     } else {
                         floGlobals.appObjects.rmTimes.articles[articleID] = {
-                            published: Date.now(),
+                            published,
                             votes: 0,
                             lastCountedVC: ''
                         }
@@ -2106,8 +2106,15 @@
             setSelectedCategories(categories || '');
             getRef('edit_contributors').value = contributors || [];
             getRef('edit_tags').value = tags || [];
-            const timeToShow = published ? published : Date.now()
-            getRef('edit_published').value = new Date(timeToShow).toISOString().substr(0, new Date(timeToShow).toISOString().indexOf("."))
+            getRef('edit_published').value = formatDate(published || Date.now())
+        }
+        // format unix timestamp to yyyy-mm-dd
+        function formatDate(unixTimestamp) {
+            const date = new Date(unixTimestamp);
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            return `${year}-${month < 10 ? '0' : ''}${month}-${day < 10 ? '0' : ''}${day}`;
         }
         function getArticleMetaData() {
             return {
@@ -2162,14 +2169,17 @@
             getConfirmation('Update article meta data?').then(async res => {
                 if (res) {
                     showLoader('UPDATING...')
-                    const { title, categories, summary, published, tags, contributors, heroImage } = getArticleMetaData()
-                    floGlobals.appObjects.rmTimes.articles[articleID].categories = categories
-                    floGlobals.appObjects.rmTimes.articles[articleID].title = title
-                    floGlobals.appObjects.rmTimes.articles[articleID].tags = tags
-                    floGlobals.appObjects.rmTimes.articles[articleID].summary = summary
-                    floGlobals.appObjects.rmTimes.articles[articleID].contributors = contributors
-                    floGlobals.appObjects.rmTimes.articles[articleID].heroImage = heroImage
-                    floGlobals.appObjects.rmTimes.articles[articleID].published = published
+                    // const { title, categories, summary, published, tags, contributors, heroImage } = getArticleMetaData()
+                    console.log(getArticleMetaData())
+                    floGlobals.appObjects.rmTimes.articles[articleID] = { ...floGlobals.appObjects.rmTimes.articles[articleID], ...getArticleMetaData() }
+                    console.log(floGlobals.appObjects.rmTimes.articles[articleID].published)
+                    // floGlobals.appObjects.rmTimes.articles[articleID].categories = categories
+                    // floGlobals.appObjects.rmTimes.articles[articleID].title = title
+                    // floGlobals.appObjects.rmTimes.articles[articleID].tags = tags
+                    // floGlobals.appObjects.rmTimes.articles[articleID].summary = summary
+                    // floGlobals.appObjects.rmTimes.articles[articleID].contributors = contributors
+                    // floGlobals.appObjects.rmTimes.articles[articleID].heroImage = heroImage
+                    // floGlobals.appObjects.rmTimes.articles[articleID].published = published
                     // if (heroImage.hasOwnProperty('full')) {
                     //     try {
                     //         compactIDB.writeData('images', { heroImage }, articleID)
