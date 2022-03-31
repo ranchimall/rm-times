@@ -2095,18 +2095,19 @@
             // const articleImages = await compactIDB.readData('images', articleID)
             if (heroImage && heroImage.hasOwnProperty('full')) {
                 // getRef('preview_image').src = `./images/${heroImage}`
+                getRef('select_full_image').value = heroImage.full;
+                getRef('select_thumbnail_image').value = heroImage.thumbnail;
+            } else {
                 getRef('select_full_image').value = '';
                 getRef('select_thumbnail_image').value = '';
-            } else {
-                // getRef('preview_image').src = ''
             }
             getRef('edit_title').value = title;
             getRef('edit_summary').value = summary || '';
             setSelectedCategories(categories || '');
             getRef('edit_contributors').value = contributors || [];
             getRef('edit_tags').value = tags || [];
-            const now = Date.now()
-            getRef('edit_published').value = new Date(published || now).toISOString().substr(0, new Date(published || now).toISOString().indexOf("."))
+            const timeToShow = published ? published : Date.now()
+            getRef('edit_published').value = new Date(timeToShow).toISOString().substr(0, new Date(timeToShow).toISOString().indexOf("."))
         }
         function getArticleMetaData() {
             return {
