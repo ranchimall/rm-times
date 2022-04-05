@@ -30,6 +30,7 @@ body {
   scrollbar-gutter: stable;
   color: rgba(var(--text-color), 1);
   background: rgba(var(--background-color), 1);
+  transition: background-color 0.3s;
 }
 
 body[data-theme="dark"] {
@@ -581,6 +582,7 @@ sm-copy {
   grid-template-columns: auto 1fr auto auto;
   background-color: rgba(var(--background-color), 1);
   z-index: 10;
+  transition: background-color 0.3s;
 }
 #expanding_search {
   position: absolute;

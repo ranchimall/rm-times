@@ -1373,6 +1373,7 @@
                             // heroImage: allImages[articleDetail.uid] ? allImages[articleDetail.uid].heroImage.thumbnail : ''
                         }))
                     })
+                    getRef('explore_heading').textContent = 'Explore all'
                 } else {
                     const options = (type === 'category') ? { keys: ['categories'], threshold: 0 } : { keys: ['title', 'categories', 'tags'], threshold: 0.3 }
                     const fuse = new Fuse(sortedByTime, options)
