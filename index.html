@@ -1291,7 +1291,7 @@
                 getRef('published_time').textContent = `${getFormattedTime(published, 'date-only')}${updated ? `, Updated ${relativeTime.from(updated)}` : ''}`
                 getRef('reading_time').textContent = `${readTime} Min read`
                 getRef('article_image').src = heroImage ? `./images/${heroImage.full}` : ''
-                getRef('article_body').innerHTML = DOMPurify.sanitize(allArticles[articleID])
+                getRef('article_body').innerHTML = DOMPurify.sanitize(allArticles[articleID], { FORBID_ATTR: ['style'], ADD_ATTR: ['target'] })
                 const allHeadings = getRef('article_body').querySelectorAll('h3')
                 allHeadings.forEach(heading => {
                     const headingText = heading.textContent
@@ -2061,7 +2061,7 @@
                 const vc = button.closest('.request-card').dataset.vc;
                 const { message: { content, title } } = floGlobals.generalData[`publishing_requests|${floGlobals.adminID}|${floGlobals.application}`][vc];
 
-                getRef('preview_container').innerHTML = DOMPurify.sanitize(content)
+                getRef('preview_container').innerHTML = DOMPurify.sanitize(content, { FORBID_ATTR: ['style'], ADD_ATTR: ['target'] })
                 getRef('preview_container').prepend(createElement('h1', {
                     textContent: title
                 }))
