@@ -824,7 +824,8 @@ theme-toggle {
 }
 
 #article_map_container {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
 }
 #article_map_container button {
@@ -1292,8 +1293,8 @@ theme-toggle {
     position: -webkit-sticky;
     position: sticky;
     top: 0;
-    display: grid;
-    grid-template-rows: 1fr auto;
+    display: flex;
+    flex-direction: column;
     padding: 1.5rem;
     width: 20rem;
     height: 100vh;

@@ -777,7 +777,8 @@ theme-toggle {
   z-index: 5;
 }
 #article_map_container {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
   button {
     line-height: 1.3;
@@ -1213,8 +1214,8 @@ theme-toggle {
   #article_aside {
     position: sticky;
     top: 0;
-    display: grid;
-    grid-template-rows: 1fr auto;
+    display: flex;
+    flex-direction: column;
     padding: 1.5rem;
     width: 20rem;
     height: 100vh;
