@@ -1292,17 +1292,24 @@ theme-toggle {
     position: -webkit-sticky;
     position: sticky;
     top: 0;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: 1fr auto;
     padding: 1.5rem;
     width: 20rem;
     height: 100vh;
-    overflow-y: overlay;
+  }
+
+  #article_map {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: hidden;
   }
 
   #article_map_container {
-    margin-top: 1.5rem;
-    margin-bottom: 3rem;
+    margin: 1.5rem 0;
+    height: 100%;
+    overflow-y: auto;
   }
 
   .heading-shortcut.active {
@@ -1327,6 +1334,7 @@ theme-toggle {
 
   #action_panel {
     position: relative;
+    flex: 1;
   }
 
   #article_body {
