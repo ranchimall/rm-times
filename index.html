@@ -1386,7 +1386,7 @@
                     })
                     getRef('explore_heading').textContent = 'Explore all'
                 } else {
-                    const options = (type === 'category') ? { keys: ['categories'], threshold: 0 } : { keys: ['title', 'categories', 'tags'], threshold: 0.3 }
+                    const options = (type === 'category') ? { keys: ['categories'], threshold: 0 } : { keys: ['title', 'tags'], threshold: 0.3 }
                     const fuse = new Fuse(sortedByTime, options)
                     const searchResult = fuse.search(query).map(v => v.item)
                     searchResult.forEach(articleDetail => {
@@ -1581,7 +1581,7 @@
             const searchKey = e.target.value.trim()
             if (searchKey !== '') {
                 const options = {
-                    keys: ['title', 'tags', 'categories'],
+                    keys: ['title', 'tags'],
                     threshold: 0.3
                 }
                 const fuse = new Fuse(getArrayOfObj(floGlobals.appObjects.rmTimes.articles).sort((a, b) => b.published - a.published), options)
