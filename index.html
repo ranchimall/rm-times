@@ -786,7 +786,7 @@
 
         let zIndex = 10
         // function required for popups or modals to appear
-        function showPopup(popupId, pinned) {
+        function openPopup(popupId, pinned) {
             zIndex++
             getRef(popupId).setAttribute('style', `z-index: ${zIndex}`)
             getRef(popupId).show({ pinned })
@@ -794,7 +794,7 @@
         }
 
         // hides the popup or modal
-        function hidePopup() {
+        function closePopup() {
             if (popupStack.peek() === undefined)
                 return;
             popupStack.peek().popup.hide()
@@ -821,7 +821,7 @@
         const getConfirmation = (title, options = {}) => {
             return new Promise(resolve => {
                 const { message, cancelText = 'Cancel', confirmText = 'OK' } = options
-                showPopup('confirmation_popup', true)
+                openPopup('confirmation_popup', true)
                 getRef('confirm_title').textContent = title;
                 getRef('confirm_message').textContent = message;
                 let cancelButton = getRef('confirmation_popup').children[2].children[0],
@@ -829,11 +829,11 @@
                 submitButton.textContent = confirmText
                 cancelButton.textContent = cancelText
                 submitButton.onclick = () => {
-                    hidePopup()
+                    closePopup()
                     resolve(true);
                 }
                 cancelButton.onclick = () => {
-                    hidePopup()
+                    closePopup()
                     resolve(false);
                 }
             })
@@ -909,7 +909,7 @@
             document.querySelectorAll('sm-input[data-private-key]').forEach(input => input.customValidation = floCrypto.getPubKeyHex)
             document.addEventListener('keyup', (e) => {
                 if (e.key === 'Escape') {
-                    hidePopup()
+                    closePopup()
                 }
             })
             document.addEventListener('copy', () => {
@@ -922,7 +922,7 @@
             });
             document.querySelectorAll('.popup__header__close, .close-popup-on-click').forEach(elem => {
                 elem.addEventListener('click', () => {
-                    hidePopup()
+                    closePopup()
                 })
             })
         });
@@ -1765,7 +1765,7 @@
                     })
                     .catch(err => console.log(err))
             } else {
-                showPopup('sign_in_popup')
+                openPopup('sign_in_popup')
             }
         }, 300))
 
@@ -1777,7 +1777,7 @@
                 })
             } else {
                 getRef('shared_url').value = window.location.href
-                showPopup('share_popup')
+                openPopup('share_popup')
             }
         }
 
@@ -1885,7 +1885,7 @@
                 getRef('sign_in_button').onclick = () => {
                     resolve(getRef('private_key_field').value.trim())
                     getRef('private_key_field').value = ''
-                    hidePopup()
+                    closePopup()
                     notify('Signed in', 'success')
                 }
                 getRef('sign_up_button').onclick = () => {
@@ -1894,7 +1894,7 @@
                             if (res) {
                                 resolve(getRef('generated_private_key').value.trim())
                                 getRef('generated_private_key').value = ''
-                                hidePopup()
+                                closePopup()
                                 notify('Signed in', 'success')
                             }
                         })
@@ -2038,7 +2038,7 @@
                             getRef('article_analytics').prepend(render.articleRow(articleID))
                         }
                         document.querySelector(`.request-card[data-vc="${vc}"]`).remove()
-                        hidePopup()
+                        closePopup()
                     }).catch(err => {
                         notify(`${isPublished ? 'UPDATE' : 'PUBLISH'} article failed`, 'error')
                         console.error(err)
@@ -2065,7 +2065,7 @@
                 }
                 getRef('set_article_meta').textContent = isPublished ? 'UPDATE' : 'PUBLISH'
                 getRef('edit_popup__title').textContent = isPublished ? 'Update' : 'Publish'
-                showPopup('edit_article_meta_popup')
+                openPopup('edit_article_meta_popup')
             } else if (e.target.closest('.preview-button')) {
                 const button = e.target.closest('.preview-button');
                 const vc = button.closest('.request-card').dataset.vc;
@@ -2075,7 +2075,7 @@
                 getRef('preview_container').prepend(createElement('h1', {
                     textContent: title
                 }))
-                showPopup('preview_popup')
+                openPopup('preview_popup')
             } else if (e.target.closest('.delete-request')) {
                 getConfirmation(`Delete this request?`).then(res => {
                     if (res) {
@@ -2153,7 +2153,7 @@
                 }
                 getRef('set_article_meta').textContent = "UPDATE"
                 getRef('edit_popup__title').textContent = "Update"
-                showPopup('edit_article_meta_popup')
+                openPopup('edit_article_meta_popup')
             } else if (e.target.closest('.delete-article')) {
                 getConfirmation(`Delete this article?`, {
                     confirmText: 'Delete'
@@ -2206,7 +2206,7 @@
                     // }
                     floCloudAPI.updateObjectData('rmTimes').then(() => {
                         notify(`Updated article meta data`, 'success')
-                        hidePopup()
+                        closePopup()
                     }).catch(err => {
                         notify(`Error updating article meta data: ${err}`, 'error')
                     }).finally(() => {
@@ -2305,7 +2305,7 @@
             getRef('save_writer').textContent = "ADD"
             getRef('get_writer_id').removeAttribute('disabled')
             getRef('get_writer_id').parentNode.classList.remove('hide')
-            showPopup('add_writer_popup')
+            openPopup('add_writer_popup')
         }
 
         function handleWritersClick(e) {
@@ -2317,7 +2317,7 @@
                 getRef('save_writer').textContent = "UPDATE"
                 getRef('get_writer_id').setAttribute('disabled', 'true')
                 getRef('get_writer_id').parentNode.classList.add('hide')
-                showPopup('add_writer_popup')
+                openPopup('add_writer_popup')
             } else if (e.target.closest('.delete-writer')) {
                 const button = e.target.closest('.delete-writer');
                 const writerID = button.closest('.writer-card').dataset.writerId;
@@ -2347,7 +2347,7 @@
                     }
                     floCloudAPI.updateObjectData('rmTimes').then(() => {
                         notify('Writer details updated', 'success')
-                        hidePopup()
+                        closePopup()
                     }).catch(error => console.error(error))
                 } else {
                     notify('Details are not changed', 'error')
@@ -2357,7 +2357,7 @@
                 floCloudAPI.updateObjectData('rmTimes').then(() => {
                     getRef('writers_list').append(render.writerCard(floID))
                     notify('Added writer details', 'success')
-                    hidePopup()
+                    closePopup()
                 }).catch(error => console.error(error))
             }
         }
@@ -2446,7 +2446,7 @@
     </script>
     <script id="onLoadStartUp">
         function onLoadStartUp() {
-            getRef('show_sign_in_button').addEventListener('click', () => showPopup('sign_in_popup'))
+            getRef('show_sign_in_button').addEventListener('click', () => openPopup('sign_in_popup'))
             //floDapps.addStartUpFunction('Sample', Promised Function)
             floDapps.setAppObjectStores({ images: {} })
             floDapps.setCustomPrivKeyInput(getSignedIn)
@@ -2454,7 +2454,7 @@
             floDapps.launchStartUp().then(async result => {
                 getRef('show_sign_in_button').classList.add('hide')
                 getRef('user_profile_button').classList.remove('hide')
-                getRef('user_profile_button').addEventListener('click', () => showPopup('user_popup'))
+                getRef('user_profile_button').addEventListener('click', () => openPopup('user_popup'))
                 getRef('user_flo_id').value = myFloID
                 floGlobals.isSubAdmin = floGlobals.subAdmins.includes(myFloID)
                 if (floGlobals.isSubAdmin) {
