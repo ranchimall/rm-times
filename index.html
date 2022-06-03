@@ -1345,16 +1345,10 @@
                 // implement live voting
                 getRef('like_count').textContent = floGlobals.appObjects.rmTimes.articles[articleID].votes
                 if (!openedArticles.hasOwnProperty(articleID)) {
-                    floCloudAPI.requestGeneralData(`article_${articleID}_votes`, {
+                    floCloudAPI.requestApplicationData(`article_${articleID}_votes`, {
                         lowerVectorClock: floGlobals.appObjects.rmTimes.articles[articleID].lastCountedVC + 1,
                         callback: (allVotes, e) => {
-                            console.log(allVotes)
                             if (firstLoad) {
-
-                                const votesAfterLastCount = floDapps.getNextGeneralData(`article_${articleID}_votes`)
-                                for (const vote in votesAfterLastCount) {
-                                    floGlobals.appObjects.rmTimes.articles[articleID].votes += votesAfterLastCount[vote].message.voteCount || 1
-                                }
                                 for (const vote in allVotes) {
                                     floGlobals.appObjects.rmTimes.articles[articleID].votes += allVotes[vote].message.voteCount || 1
                                 }
@@ -1757,7 +1751,7 @@
         })
         getRef('upvote_button').addEventListener('click', debounce(() => {
             if (typeof myFloID !== 'undefined') {
-                floCloudAPI.sendGeneralData({
+                floCloudAPI.sendApplicationData({
                     voteCount: tempVoteCount,
                 }, `article_${pagesData.params.articleID}_votes`)
                     .then(res => {
@@ -2230,13 +2224,13 @@
             for (const articleKey in floGlobals.appObjects.rmTimes.articles) {
                 if (floGlobals.appObjects.adminData.articleVotes.hasOwnProperty(articleKey) && floGlobals.appObjects.rmTimes.articles[articleKey].lastCountedVC !== '') {
                     articlesVotesProm.push(
-                        floCloudAPI.requestGeneralData(`article_${articleKey}_votes`, {
+                        floCloudAPI.requestApplicationData(`article_${articleKey}_votes`, {
                             lowerVectorClock: floGlobals.appObjects.rmTimes.articles[articleKey].lastCountedVC + 1
                         })
                     )
                 } else {
                     articlesVotesProm.push(
-                        floCloudAPI.requestGeneralData(`article_${articleKey}_votes`)
+                        floCloudAPI.requestApplicationData(`article_${articleKey}_votes`)
                     )
                 }
                 articleIDs.push(articleKey)
@@ -2246,11 +2240,10 @@
                     if (!floGlobals.appObjects.adminData.articleVotes.hasOwnProperty(articleIDs[index])) {
                         floGlobals.appObjects.adminData.articleVotes[articleIDs[index]].votes = {}
                     }
-                    if (floGlobals.appObjects.rmTimes.articles[articleIDs[index]].lastCountedVC === '') {
-                        articleVotes = floGlobals.generalData[`article_${articleIDs[index]}_votes|${floGlobals.adminID}|${floGlobals.application}`]
-                    }
-                    for (const voteKey in articleVotes) {
-                        const { senderID, message: { voteCount }, type, vectorClock, time } = articleVotes[voteKey]
+                    articleVotes.forEach(vote => {
+                        console.log(vote)
+                        const { senderID, message, type, vectorClock, time } = vote;
+                        const { voteCount } = floCloudAPI.util.decodeMessage(message)
                         const { votes } = floGlobals.appObjects.adminData.articleVotes[articleIDs[index]];
                         if (votes[senderID]) {
                             floGlobals.appObjects.adminData.articleVotes[articleIDs[index]].votes[senderID] += voteCount || 1
@@ -2258,7 +2251,7 @@
                             floGlobals.appObjects.adminData.articleVotes[articleIDs[index]].votes[senderID] = voteCount || 1
                         }
                         floGlobals.appObjects.rmTimes.articles[articleIDs[index]].lastCountedVC = vectorClock
-                    }
+                    })
                     let totalArticleVotes = 0
                     for (const voter in floGlobals.appObjects.adminData.articleVotes[articleIDs[index]].votes) {
                         totalArticleVotes += floGlobals.appObjects.adminData.articleVotes[articleIDs[index]].votes[voter]
@@ -2273,10 +2266,14 @@
                 }).catch(err => {
                     console.error(err)
                 })
+            }).catch(err => {
+                console.error(err)
             })
-            Promise.all([compactIDB.readData('appObjects', 'articlesContent'), compactIDB.readData('appObjects', 'heroImages')]).then(res => {
-                floGlobals.appObjects.articlesContent = res[0];
-                floGlobals.appObjects.heroImages = res[1];
+            Promise.all([compactIDB.readData('appObjects', 'articlesContent'), compactIDB.readData('appObjects', 'heroImages')]).then(([articlesContent, heroImages]) => {
+                floGlobals.appObjects.articlesContent = articlesContent;
+                floGlobals.appObjects.heroImages = heroImages;
+            }).catch(err => {
+                console.error(err)
             })
         }
 
