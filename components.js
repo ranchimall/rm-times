@@ -1395,7 +1395,7 @@ customElements.define('sm-popup', class extends HTMLElement {
                 }
             }
         });
-        resizeObserver.observe(this);
+        this.resizeObserver.observe(this);
 
         this.mutationObserver = new MutationObserver(entries => {
             this.updateFocusableList()
