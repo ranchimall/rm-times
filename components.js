@@ -1151,6 +1151,7 @@ customElements.define('sm-popup', class extends HTMLElement {
         this.focusable
         this.autoFocus
         this.mutationObserver
+        this.resizeObserver
 
         this.popupContainer = this.shadowRoot.querySelector('.popup-container');
         this.backdrop = this.shadowRoot.querySelector('.background');
@@ -1383,7 +1384,7 @@ customElements.define('sm-popup', class extends HTMLElement {
             }
         });
 
-        const resizeObserver = new ResizeObserver(entries => {
+        this.resizeObserver = new ResizeObserver(entries => {
             for (let entry of entries) {
                 if (entry.contentBoxSize) {
                     // Firefox implements `contentBoxSize` as a single content rect, rather than an array
@@ -1406,7 +1407,7 @@ customElements.define('sm-popup', class extends HTMLElement {
     }
     disconnectedCallback() {
         this.removeEventListener('keydown', this.detectFocus);
-        resizeObserver.unobserve();
+        this.resizeObserver.unobserve();
         this.mutationObserver.disconnect()
         this.popupHeader.removeEventListener('touchstart', this.handleTouchStart, { passive: true });
     }

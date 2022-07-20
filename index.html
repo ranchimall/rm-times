@@ -2241,7 +2241,6 @@
                         floGlobals.appObjects.adminData.articleVotes[articleIDs[index]].votes = {}
                     }
                     articleVotes.forEach(vote => {
-                        console.log(vote)
                         const { senderID, message, type, vectorClock, time } = vote;
                         const { voteCount } = floCloudAPI.util.decodeMessage(message)
                         const { votes } = floGlobals.appObjects.adminData.articleVotes[articleIDs[index]];
