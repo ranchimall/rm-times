@@ -184,7 +184,7 @@
                     <p id="writer_bio"></p>
                 </div>
                 <div class="grid">
-                    <h5>FLO ID</h5>
+                    <h5>FLO address</h5>
                     <sm-copy id="writer_id"></sm-copy>
                 </div>
             </section>
@@ -375,7 +375,7 @@
             </div>
             <div class="grid gap-1-5 card">
                 <div class="grid gap-0-5">
-                    <h5>FLO ID</h5>
+                    <h5>FLO address</h5>
                     <sm-copy id="generated_flo_id"></sm-copy>
                 </div>
                 <div class="grid gap-0-5">
@@ -505,8 +505,8 @@
         </header>
         <sm-form>
             <div class="grid">
-                <h5 class="label">FLO ID</h5>
-                <sm-input id="get_writer_id" error-text="Incorrect FLO ID" data-flo-id required></sm-input>
+                <h5 class="label">FLO address</h5>
+                <sm-input id="get_writer_id" error-text="Incorrect FLO address" data-flo-id required></sm-input>
             </div>
             <div class="grid">
                 <h5 class="label">Name</h5>
@@ -700,7 +700,7 @@
     <template id="flo_id_card_template">
         <li class="flo-id-card flex align-center">
             <div class="flo-id"></div>
-            <button class="icon-only delete-flo-id" title="Delete approved FLO ID">
+            <button class="icon-only delete-flo-id" title="Delete approved FLO address">
                 <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
                     fill="#000000">
                     <path d="M0 0h24v24H0V0z" fill="none" />
@@ -2362,7 +2362,7 @@
 
 
         function addApprovedID() {
-            getConfirmation('Approve FLO ID?').then(res => {
+            getConfirmation('Approve FLO address?').then(res => {
                 if (res) {
                     const idToAdd = getRef('get_id_to_add').value.trim()
                     const validIds = idToAdd.split(',').filter(floID => {
@@ -2390,12 +2390,12 @@
             if (e.target.closest('.delete-flo-id')) {
                 const floIdCard = e.target.closest('.flo-id-card');
                 const floID = floIdCard.dataset.floId;
-                getConfirmation('Remove this FLO ID from approved list?').then(res => {
+                getConfirmation('Remove this FLO address from approved list?').then(res => {
                     if (res) {
                         delete floGlobals.appObjects.adminData.approvedID[floID]
                         floIdCard.remove()
                         floCloudAPI.updateObjectData('adminData').then(() => {
-                            notify('Removed FLO ID', 'success')
+                            notify('Removed FLO address', 'success')
                         }).catch(error => console.error(error))
                     }
                 })
