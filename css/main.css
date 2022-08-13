@@ -15,34 +15,32 @@ body {
 }
 
 body {
+  --accent-color: #256eff;
+  --text-color: 20, 20, 20;
+  --foreground-color: 252, 253, 255;
+  --background-color: 241, 243, 248;
+  --danger-color: rgb(255, 75, 75);
+  --green: #1cad59;
+  --like-color: #e91e63;
   scrollbar-gutter: stable;
   color: rgba(var(--text-color), 1);
   background: rgba(var(--background-color), 1);
   transition: background-color 0.3s;
 }
-body,
 body * {
-  --accent-color: #256eff;
-  --text-color: 20, 20, 20;
-  --background-color: 252, 250, 245;
-  --foreground-color: rgb(255, 253, 251);
-  --danger-color: rgb(255, 75, 75);
-  --green: #1cad59;
-  --like-color: #e91e63;
   scrollbar-width: thin;
 }
 
-body[data-theme=dark],
-body[data-theme=dark] * {
+body[data-theme=dark] {
   --accent-color: #86afff;
   --text-color: 220, 220, 220;
-  --background-color: 10, 10, 10;
-  --foreground-color: rgb(24, 24, 24);
+  --foreground-color: 27, 28, 29;
+  --background-color: 21, 22, 22;
   --danger-color: rgb(255, 106, 106);
   --green: #00e676;
 }
 body[data-theme=dark] sm-popup::part(popup) {
-  background-color: var(--foreground-color);
+  background-color: rgba(var(--foreground-color), 1);
 }
 body[data-theme=dark] ::-webkit-calendar-picker-indicator {
   filter: invert(1);
@@ -531,7 +529,7 @@ strip-option {
 }
 
 sm-menu {
-  --background: var(--foreground-color);
+  --background: rgba(var(--foreground-color), 1);
 }
 
 menu-option {
@@ -584,7 +582,7 @@ sm-copy {
   height: 100%;
   width: 100%;
   left: 0;
-  background: linear-gradient(rgba(var(--foreground-color), 1), transparent 20%, transparent 80%, rgba(var(--foreground-color), 1));
+  background: linear-gradient(rgba(var(--background-color), 1), transparent 20%, transparent 80%, rgba(var(--background-color), 1));
 }
 
 #loader {
@@ -658,7 +656,7 @@ sm-copy {
 #search_suggestions {
   position: absolute;
   top: 100%;
-  background-color: var(--foreground-color);
+  background-color: rgba(var(--foreground-color), 1);
   padding: 0.3rem;
   width: 100%;
   border-radius: 0.3rem;
@@ -958,7 +956,7 @@ theme-toggle {
 }
 
 #go_to_top {
-  background-color: var(--foreground-color);
+  background-color: rgba(var(--foreground-color), 1);
 }
 
 #dashboard {
@@ -1041,7 +1039,7 @@ theme-toggle {
   gap: 1rem;
   padding: 1rem;
   border-radius: 0.5rem;
-  background-color: var(--foreground-color);
+  background-color: rgba(var(--foreground-color), 1);
 }
 .writer-card .writer-profile {
   display: flex;
@@ -1055,7 +1053,7 @@ theme-toggle {
   font-size: 100%;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--foreground-color);
+  color: rgba(var(--foreground-color), 1);
 }
 .writer-card sm-copy {
   margin-top: -0.5rem;
@@ -1203,7 +1201,7 @@ theme-toggle {
     width: min-content;
     padding: 0.5rem;
     border-radius: 0.5rem;
-    background-color: var(--foreground-color);
+    background-color: rgba(var(--foreground-color), 1);
     margin: 1.5rem;
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
   }
