@@ -241,7 +241,10 @@
                         <time id="published_time"></time>
                         <span class="bullet-point"></span><span id="reading_time" style="white-space: nowrap;"></span>
                     </div>
-                    <div id="article_contributors" class="flex"></div>
+                    <section class="margin-top-1">
+                        <h5>Article by</h5>
+                        <div id="article_contributors" class="flex"></div>
+                    </section>
                     <img id="article_image" src="" alt="" loading="lazy">
                 </header>
                 <details id="article_map_accordion" class="hide-on-desktop">
@@ -1306,7 +1309,7 @@
                 getRef('trending_article_container').append(frag)
                 // render latest articles
                 const sortedArticles = sortedByVotes.slice(4).sort((a, b) => b.published - a.published)
-                sortedArticles.slice(0, 4).forEach(articleDetail => {
+                sortedArticles.slice(0, 6).forEach(articleDetail => {
                     frag.append(render.articleCard({
                         ...articleDetail,
                         // heroImage: allImages[articleDetail.uid] ? allImages[articleDetail.uid].heroImage.thumbnail : ''

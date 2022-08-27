@@ -421,6 +421,9 @@ h3 {
 .margin-left-0-5 {
   margin-left: 0.5rem;
 }
+.margin-top-1 {
+  margin-top: 1rem;
+}
 .margin-top-1-5 {
   margin-top: 1.5rem;
 }
@@ -856,11 +859,10 @@ theme-toggle {
 #article_contributors {
   flex-wrap: wrap;
   gap: 1.5rem;
-  margin: 1rem 0;
+  margin-top: 0.5rem;
 }
 .contributor {
   display: flex;
-  font-size: 0.75rem;
   align-items: center;
   font-weight: 500;
   &__dp {
@@ -1264,7 +1266,7 @@ theme-toggle {
   #preview_popup,
   #article {
     h1 {
-      font-size: 2.2rem;
+      font-size: 2.5rem;
     }
     h3 {
       font-size: 1.4rem;
