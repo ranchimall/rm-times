@@ -935,6 +935,8 @@ theme-toggle {
   background-color: var(--accent-color);
   border-radius: 2rem;
   font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
   aspect-ratio: 1/1;
   color: rgba(var(--background-color), 1);
   margin-right: 0.5rem;
