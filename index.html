@@ -101,7 +101,7 @@
                 <h4>RanchiMall Times</h4>
             </a>
             <button id="search_button" class="icon-only hide-on-desktop" title="Search for articles"
-                onclick="toggleSearch()">
+                onclick="revealSearch()">
                 <svg class="icon" slot="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
                     width="24px" fill="#000000">
                     <path d="M0 0h24v24H0V0z" fill="none" />
@@ -111,7 +111,7 @@
             </button>
             <div id="expanding_search" class="hide-on-mobile">
                 <div class="flex align-center">
-                    <button class="icon-only hide-on-desktop" onclick="toggleSearch()">
+                    <button class="icon-only hide-on-desktop" onclick="hideSearch()">
                         <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
                             width="24px" fill="#000000">
                             <path d="M0 0h24v24H0V0z" fill="none" />
@@ -1556,40 +1556,46 @@
 
 
         let isSearchOn = false
-        function toggleSearch() {
+        function revealSearch() {
             const animOptions = {
                 easing: 'ease',
                 fill: 'forwards',
                 duration: 150,
             }
-            if (!isSearchOn) {
+            if (!isSearchOn && getRef('expanding_search').classList.contains('hide-on-mobile')) {
                 getRef('expanding_search').classList.remove('hide-on-mobile')
                 getRef('search_articles').focusIn()
                 getRef('expanding_search').animate([
                     {
                         transform: 'scale(0.95)',
-                        opacity: 1
                     },
                     {
                         transform: 'scale(1)',
-                        opacity: 1
                     },
-                ], animOptions)
-                isSearchOn = true
-            } else {
+                ], animOptions).onfinish = e => {
+                    isSearchOn = true
+                }
+            }
+        }
+        function hideSearch() {
+            const animOptions = {
+                easing: 'ease',
+                fill: 'forwards',
+                duration: 150,
+            }
+            if (isSearchOn && !getRef('expanding_search').classList.contains('hide-on-mobile')) {
                 getRef('expanding_search').animate([
                     {
                         transform: 'scale(1)',
-                        opacity: 1
                     },
                     {
                         transform: 'scale(0.95)',
-                        opacity: 0
                     },
                 ], animOptions)
-                    .onfinish = () => {
+                    .onfinish = (e) => {
                         getRef('expanding_search').classList.add('hide-on-mobile');
                         getRef('search_articles').value = ''
+                        e.target.cancel()
                         isSearchOn = false
                     }
             }
@@ -1638,13 +1644,13 @@
             if (e.target.value.trim() !== '' && e.key === 'Enter') {
                 location.hash = `#/explore?type=search&query=${e.target.value.trim()}`
                 e.target.value = ''
-                toggleSearch()
+                hideSearch()
             }
         })
 
         delegate(getRef('search_suggestions'), 'click', '.search-suggestion', e => {
             getRef('search_articles').value = ''
-            toggleSearch()
+            hideSearch()
         })
         const slideInLeft = [
             {
