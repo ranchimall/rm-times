@@ -1355,12 +1355,7 @@
 
                 const contributorList = contributors.map(id => {
                     const contributorName = floGlobals.appObjects.rmTimes.articleWriters.hasOwnProperty(id) ? floGlobals.appObjects.rmTimes.articleWriters[id].name : id;
-                    return html`
-                        <a href="${`#/writer?id=${id}`}" class="contributor">
-                            <span class="contributor__dp">${contributorName.split(' ').map(v => v.charAt(0)).join('')}</span>
-                            ${contributorName}
-                        </a>
-                    `
+                    return html` <a href="${`#/writer?id=${id}`}" class="contributor"> ${contributorName} </a> `
                 })
                 renderElem(getRef('article_contributors'), html`${contributorList}`)
 
