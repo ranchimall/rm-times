@@ -16,7 +16,7 @@
         rel="stylesheet">
     <script src="./scripts/purify.min.js" defer></script>
     <script src="https://unpkg.com/uhtml@3.0.1/es.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2" defer></script>
     <script id="floGlobals">
         /* Constants for FLO blockchain operations !!Make sure to add this at begining!! */
         const floGlobals = {
@@ -1352,7 +1352,6 @@
                 allHeadings.forEach(heading => {
                     headingObserver.observe(heading.nextElementSibling)
                 })
-
                 const contributorList = contributors.map(id => {
                     const contributorName = floGlobals.appObjects.rmTimes.articleWriters.hasOwnProperty(id) ? floGlobals.appObjects.rmTimes.articleWriters[id].name : id;
                     return html` <a href="${`#/writer?id=${id}`}" class="contributor"> ${contributorName} </a> `
@@ -1418,7 +1417,7 @@
                     })
                     getRef('explore_heading').textContent = 'Explore all'
                 } else {
-                    const options = (type === 'category') ? { keys: ['categories'], threshold: 0 } : { keys: ['title', 'tags'], threshold: 0.3 }
+                    const options = (type === 'category') ? { keys: ['categories'], threshold: 0 } : { keys: ['title', 'tags'], threshold: 0, ignoreLocation: true }
                     const fuse = new Fuse(sortedByTime, options)
                     const searchResult = fuse.search(query).map(v => v.item)
                     searchResult.forEach(articleDetail => {
@@ -1604,34 +1603,39 @@
             const searchKey = e.target.value.trim()
             if (searchKey !== '') {
                 const options = {
-                    keys: ['title', 'tags'],
-                    threshold: 0.3
+                    threshold: 0,
+                    ignoreLocation: true
                 }
-                const fuse = new Fuse(getArrayOfObj(floGlobals.appObjects.rmTimes.articles).sort((a, b) => b.published - a.published), options)
-                const searchResult = fuse.search(searchKey).map(v => v.item)
-                getRef('search_suggestions').innerHTML = ''
-                if (searchResult.length) {
-                    const frag = document.createDocumentFragment()
-                    searchResult.slice(0, 4).forEach((result) => {
+                const maxSuggestions = 6;
+                const allSortedArticles = getArrayOfObj(floGlobals.appObjects.rmTimes.articles).sort((a, b) => b.published - a.published);
+                const titleSearch = new Fuse(allSortedArticles, { ...options, keys: ['title'] })
+                const titleSearchResult = titleSearch.search(searchKey).map(v => v.item)
+                const regEx = new RegExp(`(${searchKey})`, 'gi')
+                let suggestions = titleSearchResult.slice(0, maxSuggestions).map((result) => {
+                    const { uid, title } = result
+                    const pre = createElement('pre', { innerHTML: title.replace(regEx, `<span>$&</span>`), })
+                    return html`<a class="search-suggestion interact" href="${`#/article?articleID=${uid}`}">${pre}</a>`;
+                })
+                // check for related tags if titles don't have enough exact matches
+                if (titleSearchResult.length < 4) {
+                    const tagSearch = new Fuse(allSortedArticles, { ...options, keys: ['tags'] })
+                    const tagSearchResult = tagSearch.search(searchKey).map(v => v.item)
+                    const tagSuggestions = tagSearchResult.slice(0, maxSuggestions - titleSearchResult.length).map((result) => {
                         const { uid, title } = result
-                        frag.append(createElement('a', {
-                            textContent: title,
-                            attributes: { href: `#/article?articleID=${uid}` },
-                            className: 'search-suggestion interact'
-                        }))
+                        return html`<a class="search-suggestion interact" href="${`#/article?articleID=${uid}`}">${title}</a>`;
                     })
-                    getRef('search_suggestions').append(frag)
-                    if (searchResult.length > 4) {
-                        getRef('search_suggestions').append(createElement('a', {
-                            textContent: 'See all results',
-                            attributes: { href: `#/explore?type=search&query=${searchKey}` },
-                            className: 'search-suggestion interact'
-                        }))
+                    if (tagSuggestions.length) {
+                        const related = html`<p class="more-related">Might be related</p>`
+                        suggestions = [...suggestions, related, ...tagSuggestions]
                     }
-                } else {
-                    getRef('search_suggestions').append(createElement('div', {
-                        innerHTML: `No articles related to <strong>${searchKey}</strong>`
-                    }))
+                }
+                if (titleSearchResult.length > maxSuggestions) {
+                    const seeMore = html.node`<a class="search-suggestion interact" href="${`#/explore?type=search&query=${searchKey}`}">See all results</a>`;
+                    suggestions.push(seeMore)
+                }
+                renderElem(getRef('search_suggestions'), html`${suggestions}`)
+                if (suggestions.length === 0) {
+                    renderElem(getRef('search_suggestions'), html`<div style="padding: 0.5rem 1rem">No articles related to <strong>${searchKey}</strong></div>`)
                 }
                 getRef('search_suggestions').classList.remove('hide')
             } else {
@@ -2162,7 +2166,7 @@
                 },
                 summary: getRef('edit_summary').value.trim(),
                 published: new Date(getRef('edit_published').value).getTime(),
-                contributors: getRef('edit_contributors').value,
+                contributors: getRef('edit_contributors').value.filter(v => v),
                 tags: getRef('edit_tags').value,
             }
         }
@@ -2208,14 +2212,6 @@
                     // const { title, categories, summary, published, tags, contributors, heroImage } = getArticleMetaData()
                     console.log(getArticleMetaData())
                     floGlobals.appObjects.rmTimes.articles[articleID] = { ...floGlobals.appObjects.rmTimes.articles[articleID], ...getArticleMetaData() }
-                    console.log(floGlobals.appObjects.rmTimes.articles[articleID].published)
-                    // floGlobals.appObjects.rmTimes.articles[articleID].categories = categories
-                    // floGlobals.appObjects.rmTimes.articles[articleID].title = title
-                    // floGlobals.appObjects.rmTimes.articles[articleID].tags = tags
-                    // floGlobals.appObjects.rmTimes.articles[articleID].summary = summary
-                    // floGlobals.appObjects.rmTimes.articles[articleID].contributors = contributors
-                    // floGlobals.appObjects.rmTimes.articles[articleID].heroImage = heroImage
-                    // floGlobals.appObjects.rmTimes.articles[articleID].published = published
                     // if (heroImage.hasOwnProperty('full')) {
                     //     try {
                     //         compactIDB.writeData('images', { heroImage }, articleID)

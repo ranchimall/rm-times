@@ -704,12 +704,27 @@ sm-copy {
   border-radius: 0.3rem;
   box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1);
 }
+#search_suggestions .more-related {
+  padding: 0.5rem 1rem;
+}
+#search_suggestions .more-related:not(:first-child) {
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: thin solid rgba(var(--text-color), 0.5);
+}
 
 .search-suggestion {
   font-size: 0.9rem;
   color: inherit;
   padding: 1rem;
   border-radius: 0.3rem;
+  font-weight: 700;
+}
+.search-suggestion pre {
+  white-space: pre-wrap;
+}
+.search-suggestion span {
+  font-weight: 400;
 }
 
 #search_articles {
@@ -1298,7 +1313,7 @@ theme-toggle {
   #expanding_search {
     position: relative;
     margin: 0 1.5rem;
-    width: 18rem;
+    width: 22rem;
   }
   #search_suggestions {
     top: calc(100% + 0.5rem);
