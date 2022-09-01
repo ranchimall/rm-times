@@ -1352,7 +1352,7 @@
                 allHeadings.forEach(heading => {
                     headingObserver.observe(heading.nextElementSibling)
                 })
-                const contributorList = contributors.map(id => {
+                const contributorList = contributors.filter(v => v).map(id => {
                     const contributorName = floGlobals.appObjects.rmTimes.articleWriters.hasOwnProperty(id) ? floGlobals.appObjects.rmTimes.articleWriters[id].name : id;
                     return html` <a href="${`#/writer?id=${id}`}" class="contributor"> ${contributorName} </a> `
                 })
