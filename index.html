@@ -7,42 +7,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RanchiMall Times</title>
     <meta name="description" content="Read handpicked articles">
-    <script src="./scripts/components.js"></script>
     <link rel="stylesheet" href="css/main.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Calistoga&family=Roboto:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap"
         rel="stylesheet">
-    <script src="./scripts/purify.min.js" defer></script>
-    <script src="https://unpkg.com/uhtml@3.0.1/es.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2" defer></script>
     <script id="floGlobals">
         /* Constants for FLO blockchain operations !!Make sure to add this at beginning!! */
         const floGlobals = {
-
-            //Required for all
             blockchain: "FLO",
-
-            //Required for blockchain API operators
-            apiURL: {
-                FLO: ['https://flosight.duckdns.org/', 'https://livenet.flocha.in/'],
-                FLO_TEST: ['https://testnet-flosight.duckdns.org/', 'https://testnet.flocha.in/']
-            },
-            adminID: "FF5pewfsJxyrCvg8a2C8VXefeyVvKvQxmF",
-            sendAmt: 0.001,
-            fee: 0.0005,
-
-            //Required for Supernode operations
-            SNStorageID: "FNaN9McoBAEFUjkRmNQRYLmBF8SpS7Tgfk",
-            supernodes: {}, //each supnernode must be stored as floID : {uri:<uri>,pubKey:<publicKey>}
-
-            //for cloud apps
-            subAdmins: [],
             application: "RM_Times",
-            appObjects: {},
-            generalData: {},
-            lastVC: {}
+            adminID: "FF5pewfsJxyrCvg8a2C8VXefeyVvKvQxmF"
         }
     </script>
 </head>
@@ -274,12 +250,12 @@
         </article>
         <article id="dashboard" class="page page-layout hide">
             <div class="flex justify-center align-center">
-                <strip-select id="section_selector">
-                    <strip-option value="analytic" selected>Analytics</strip-option>
-                    <strip-option value="request">Requests</strip-option>
-                    <strip-option value="writers">Writers</strip-option>
-                    <strip-option value="cc">CC</strip-option>
-                </strip-select>
+                <sm-chips id="section_selector">
+                    <sm-chip value="analytic" selected>Analytics</sm-chip>
+                    <sm-chip value="request">Requests</sm-chip>
+                    <sm-chip value="writers">Writers</sm-chip>
+                    <sm-chip value="cc">CC</sm-chip>
+                </sm-chips>
             </div>
             <section id="analytic_section" class="admin-section">
                 <ul id="article_analytics" class="grid gap-2 observe-empty-state"></ul>
@@ -730,13 +706,17 @@
             </button>
         </li>
     </template>
-    <script id="lib" src="scripts/lib.js"></script>
-    <script id="floCrypto" src="scripts/floCrypto.js"></script>
-    <script id="floBlockchainAPI" src="scripts/floBlockchainAPI.js"></script>
-    <script id="compactIDB" src="scripts/compactIDB.js"></script>
-    <script id="floCloudAPI" src="scripts/floCloudAPI.js"></script>
-    <script id="floDapps" src="scripts/floDapps.js"></script>
-    <script src="scripts/lib_btc.js"></script>
+    <script src="components.js"></script>
+    <script src="purify.min.js" defer></script>
+    <script src="https://unpkg.com/uhtml@3.0.1/es.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2" defer></script>
+    <script src="lib.js"></script>
+    <script src="floCrypto.js"></script>
+    <script src="btcOperator.js"></script>
+    <script src="floBlockchainAPI.js"></script>
+    <script src="compactIDB.js"></script>
+    <script src="floCloudAPI.js"></script>
+    <script src="floDapps.js"></script>
     <script>
 
         /**
