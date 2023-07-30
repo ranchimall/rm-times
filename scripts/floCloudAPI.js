@@ -1,23 +1,75 @@
-(function(EXPORTS) { //floCloudAPI v2.3.0
+(function (EXPORTS) { //floCloudAPI v2.4.5
     /* FLO Cloud operations to send/request application data*/
     'use strict';
     const floCloudAPI = EXPORTS;
 
     const DEFAULT = {
+        blockchainPrefix: 0x23, //Prefix version for FLO blockchain
         SNStorageID: floGlobals.SNStorageID || "FNaN9McoBAEFUjkRmNQRYLmBF8SpS7Tgfk",
         adminID: floGlobals.adminID,
-        application: floGlobals.application
+        application: floGlobals.application,
+        SNStorageName: "SuperNodeStorage",
+        callback: (d, e) => console.debug(d, e)
     };
+
+    var user_id, user_public, user_private, aes_key;
+
+    function user(id, priv) {
+        if (!priv || !id)
+            return user.clear();
+        let pub = floCrypto.getPubKeyHex(priv);
+        if (!pub || !floCrypto.verifyPubKey(pub, id))
+            return user.clear();
+        let n = floCrypto.randInt(12, 20);
+        aes_key = floCrypto.randString(n);
+        user_private = Crypto.AES.encrypt(priv, aes_key);
+        user_public = pub;
+        user_id = id;
+        return user_id;
+    }
+
+    Object.defineProperties(user, {
+        id: {
+            get: () => {
+                if (!user_id)
+                    throw "User not set";
+                return user_id;
+            }
+        },
+        public: {
+            get: () => {
+                if (!user_public)
+                    throw "User not set";
+                return user_public;
+            }
+        },
+        sign: {
+            value: msg => {
+                if (!user_private)
+                    throw "User not set";
+                return floCrypto.signData(msg, Crypto.AES.decrypt(user_private, aes_key));
+            }
+        },
+        clear: {
+            value: () => user_id = user_public = user_private = aes_key = undefined
+        }
+    })
 
     Object.defineProperties(floCloudAPI, {
         SNStorageID: {
             get: () => DEFAULT.SNStorageID
+        },
+        SNStorageName: {
+            get: () => DEFAULT.SNStorageName
         },
         adminID: {
             get: () => DEFAULT.adminID
         },
         application: {
             get: () => DEFAULT.application
+        },
+        user: {
+            get: () => user
         }
     });
 
@@ -31,6 +83,9 @@
             get: () => generalData,
             set: data => generalData = data
         },
+        generalDataset: {
+            value: (type, options = {}) => generalData[filterKey(type, options)]
+        },
         lastVC: {
             get: () => lastVC,
             set: vc => lastVC = vc
@@ -43,7 +98,7 @@
     });
 
     var kBucket;
-    const K_Bucket = floCloudAPI.K_Bucket = function(masterID, nodeList) {
+    const K_Bucket = floCloudAPI.K_Bucket = function (masterID, nodeList) {
 
         const decodeID = floID => {
             let k = bitjs.Base58.decode(floID);
@@ -77,7 +132,7 @@
         });
 
         self.isNode = floID => _CO.includes(floID);
-        self.innerNodes = function(id1, id2) {
+        self.innerNodes = function (id1, id2) {
             if (!_CO.includes(id1) || !_CO.includes(id2))
                 throw Error('Given nodes are not supernode');
             let iNodes = []
@@ -88,7 +143,7 @@
             }
             return iNodes
         }
-        self.outterNodes = function(id1, id2) {
+        self.outterNodes = function (id1, id2) {
             if (!_CO.includes(id1) || !_CO.includes(id2))
                 throw Error('Given nodes are not supernode');
             let oNodes = []
@@ -99,7 +154,7 @@
             }
             return oNodes
         }
-        self.prevNode = function(id, N = 1) {
+        self.prevNode = function (id, N = 1) {
             let n = N || _CO.length;
             if (!_CO.includes(id))
                 throw Error('Given node is not supernode');
@@ -113,7 +168,7 @@
             }
             return (N == 1 ? pNodes[0] : pNodes)
         }
-        self.nextNode = function(id, N = 1) {
+        self.nextNode = function (id, N = 1) {
             let n = N || _CO.length;
             if (!_CO.includes(id))
                 throw Error('Given node is not supernode');
@@ -128,7 +183,7 @@
             }
             return (N == 1 ? nNodes[0] : nNodes)
         }
-        self.closestNode = function(id, N = 1) {
+        self.closestNode = function (id, N = 1) {
             let decodedId = decodeID(id);
             let n = N || _CO.length;
             let cNodes = _KB.closest(decodedId, n)
@@ -175,7 +230,7 @@
             if (_inactive.size === kBucket.list.length)
                 return reject('Cloud offline');
             if (!(snID in supernodes))
-                snID = kBucket.closestNode(snID);
+                snID = kBucket.closestNode(proxyID(snID));
             ws_connect(snID)
                 .then(node => resolve(node))
                 .catch(error => {
@@ -213,7 +268,7 @@
             if (_inactive.size === kBucket.list.length)
                 return reject('Cloud offline');
             if (!(snID in supernodes))
-                snID = kBucket.closestNode(snID);
+                snID = kBucket.closestNode(proxyID(snID));
             fetch_API(snID, data)
                 .then(result => resolve(result))
                 .catch(error => {
@@ -242,8 +297,8 @@
             fetch_ActiveAPI(floID, data).then(response => {
                 if (response.ok)
                     response.json()
-                    .then(result => resolve(result))
-                    .catch(error => reject(error))
+                        .then(result => resolve(result))
+                        .catch(error => reject(error))
                 else response.text()
                     .then(result => reject(response.status + ": " + result)) //Error Message from Node
                     .catch(error => reject(error))
@@ -269,6 +324,7 @@
             data => {
                 data = objectifier(data);
                 let filtered = {},
+                    proxy = proxyID(request.receiverID),
                     r = request;
                 for (let v in data) {
                     let d = data[v];
@@ -277,7 +333,7 @@
                         (r.atVectorClock || !r.upperVectorClock || r.upperVectorClock >= v) &&
                         (!r.afterTime || r.afterTime < d.log_time) &&
                         r.application == d.application &&
-                        r.receiverID == d.receiverID &&
+                        (proxy == d.receiverID || proxy == d.proxyID) &&
                         (!r.comment || r.comment == d.comment) &&
                         (!r.type || r.type == d.type) &&
                         (!r.senderID || r.senderID.includes(d.senderID)))
@@ -318,18 +374,62 @@
 
     const util = floCloudAPI.util = {};
 
-    const encodeMessage = util.encodeMessage = function(message) {
+    const encodeMessage = util.encodeMessage = function (message) {
         return btoa(unescape(encodeURIComponent(JSON.stringify(message))))
     }
 
-    const decodeMessage = util.decodeMessage = function(message) {
+    const decodeMessage = util.decodeMessage = function (message) {
         return JSON.parse(decodeURIComponent(escape(atob(message))))
     }
 
-    const filterKey = util.filterKey = function(type, options) {
+    const filterKey = util.filterKey = function (type, options = {}) {
         return type + (options.comment ? ':' + options.comment : '') +
             '|' + (options.group || options.receiverID || DEFAULT.adminID) +
             '|' + (options.application || DEFAULT.application);
+    }
+
+    const proxyID = util.proxyID = function (address) {
+        if (!address)
+            return;
+        var bytes;
+        if (address.length == 33 || address.length == 34) { //legacy encoding
+            let decode = bitjs.Base58.decode(address);
+            bytes = decode.slice(0, decode.length - 4);
+            let checksum = decode.slice(decode.length - 4),
+                hash = Crypto.SHA256(Crypto.SHA256(bytes, {
+                    asBytes: true
+                }), {
+                    asBytes: true
+                });
+            hash[0] != checksum[0] || hash[1] != checksum[1] || hash[2] != checksum[2] || hash[3] != checksum[3] ?
+                bytes = undefined : bytes.shift();
+        } else if (address.length == 42 || address.length == 62) { //bech encoding
+            if (typeof coinjs !== 'function')
+                throw "library missing (lib_btc.js)";
+            let decode = coinjs.bech32_decode(address);
+            if (decode) {
+                bytes = decode.data;
+                bytes.shift();
+                bytes = coinjs.bech32_convert(bytes, 5, 8, false);
+                if (address.length == 62) //for long bech, aggregate once more to get 160 bit 
+                    bytes = coinjs.bech32_convert(bytes, 5, 8, false);
+            }
+        } else if (address.length == 66) { //public key hex
+            bytes = ripemd160(Crypto.SHA256(Crypto.util.hexToBytes(address), {
+                asBytes: true
+            }));
+        }
+        if (!bytes)
+            throw "Invalid address: " + address;
+        else {
+            bytes.unshift(DEFAULT.blockchainPrefix);
+            let hash = Crypto.SHA256(Crypto.SHA256(bytes, {
+                asBytes: true
+            }), {
+                asBytes: true
+            });
+            return bitjs.Base58.encode(bytes.concat(hash.slice(0, 4)));
+        }
     }
 
     const lastCommit = {};
@@ -392,19 +492,19 @@
         }));
     }
 
-    //set status as online for myFloID
-    floCloudAPI.setStatus = function(options = {}) {
+    //set status as online for user_id
+    floCloudAPI.setStatus = function (options = {}) {
         return new Promise((resolve, reject) => {
-            let callback = options.callback instanceof Function ? options.callback : (d, e) => console.debug(d, e);
+            let callback = options.callback instanceof Function ? options.callback : DEFAULT.callback;
             var request = {
-                floID: myFloID,
+                floID: user.id,
                 application: options.application || DEFAULT.application,
                 time: Date.now(),
                 status: true,
-                pubKey: myPubKey
+                pubKey: user.public
             }
             let hashcontent = ["time", "application", "floID"].map(d => request[d]).join("|");
-            request.sign = floCrypto.signData(hashcontent, myPrivKey);
+            request.sign = user.sign(hashcontent);
             liveRequest(options.refID || DEFAULT.adminID, request, callback)
                 .then(result => resolve(result))
                 .catch(error => reject(error))
@@ -412,11 +512,11 @@
     }
 
     //request status of floID(s) in trackList
-    floCloudAPI.requestStatus = function(trackList, options = {}) {
+    floCloudAPI.requestStatus = function (trackList, options = {}) {
         return new Promise((resolve, reject) => {
             if (!Array.isArray(trackList))
                 trackList = [trackList];
-            let callback = options.callback instanceof Function ? options.callback : (d, e) => console.debug(d, e);
+            let callback = options.callback instanceof Function ? options.callback : DEFAULT.callback;
             let request = {
                 status: false,
                 application: options.application || DEFAULT.application,
@@ -429,12 +529,12 @@
     }
 
     //send any message to supernode cloud storage
-    const sendApplicationData = floCloudAPI.sendApplicationData = function(message, type, options = {}) {
+    const sendApplicationData = floCloudAPI.sendApplicationData = function (message, type, options = {}) {
         return new Promise((resolve, reject) => {
             var data = {
-                senderID: myFloID,
+                senderID: user.id,
                 receiverID: options.receiverID || DEFAULT.adminID,
-                pubKey: myPubKey,
+                pubKey: user.public,
                 message: encodeMessage(message),
                 time: Date.now(),
                 application: options.application || DEFAULT.application,
@@ -443,7 +543,7 @@
             }
             let hashcontent = ["receiverID", "time", "application", "type", "message", "comment"]
                 .map(d => data[d]).join("|")
-            data.sign = floCrypto.signData(hashcontent, myPrivKey);
+            data.sign = user.sign(hashcontent);
             singleRequest(data.receiverID, data)
                 .then(result => resolve(result))
                 .catch(error => reject(error))
@@ -451,7 +551,7 @@
     }
 
     //request any data from supernode cloud
-    const requestApplicationData = floCloudAPI.requestApplicationData = function(type, options = {}) {
+    const requestApplicationData = floCloudAPI.requestApplicationData = function (type, options = {}) {
         return new Promise((resolve, reject) => {
             var request = {
                 receiverID: options.receiverID || DEFAULT.adminID,
@@ -482,19 +582,20 @@
         })
     }
 
-    //(NEEDS UPDATE) delete data from supernode cloud (received only)
+    /*(NEEDS UPDATE)
+    //delete data from supernode cloud (received only)
     floCloudAPI.deleteApplicationData = function(vectorClocks, options = {}) {
         return new Promise((resolve, reject) => {
             var delreq = {
-                requestorID: myFloID,
-                pubKey: myPubKey,
+                requestorID: user.id,
+                pubKey: user.public,
                 time: Date.now(),
                 delete: (Array.isArray(vectorClocks) ? vectorClocks : [vectorClocks]),
                 application: options.application || DEFAULT.application
             }
             let hashcontent = ["time", "application", "delete"]
                 .map(d => delreq[d]).join("|")
-            delreq.sign = floCrypto.signData(hashcontent, myPrivKey)
+            delreq.sign = user.sign(hashcontent)
             singleRequest(delreq.requestorID, delreq).then(result => {
                 let success = [],
                     failed = [];
@@ -507,64 +608,56 @@
             }).catch(error => reject(error))
         })
     }
-
-    //(NEEDS UPDATE) edit comment of data in supernode cloud (mutable comments only)
-    floCloudAPI.editApplicationData = function(vectorClock, newComment, oldData, options = {}) {
+    */
+    //edit comment of data in supernode cloud (sender only)
+    floCloudAPI.editApplicationData = function (vectorClock, comment_edit, options = {}) {
         return new Promise((resolve, reject) => {
-            let p0
-            if (!oldData) {
-                options.atVectorClock = vectorClock;
-                options.callback = false;
-                p0 = requestApplicationData(false, options)
-            } else
-                p0 = Promise.resolve({
-                    vectorClock: {
-                        ...oldData
-                    }
-                })
-            p0.then(d => {
-                if (d.senderID != myFloID)
-                    return reject("Invalid requestorID")
-                else if (!d.comment.startsWith("EDIT:"))
-                    return reject("Data immutable")
-                let data = {
-                    requestorID: myFloID,
-                    receiverID: d.receiverID,
+            //request the data from cloud for resigning
+            let req_options = Object.assign({}, options);
+            req_options.atVectorClock = vectorClock;
+            requestApplicationData(undefined, req_options).then(result => {
+                if (!result.length)
+                    return reject("Data not found");
+                let data = result[0];
+                if (data.senderID !== user.id)
+                    return reject("Only sender can edit comment");
+                data.comment = comment_edit;
+                let hashcontent = ["receiverID", "time", "application", "type", "message", "comment"]
+                    .map(d => data[d]).join("|");
+                let re_sign = user.sign(hashcontent);
+                var request = {
+                    receiverID: options.receiverID || DEFAULT.adminID,
+                    requestorID: user.id,
+                    pubKey: user.public,
                     time: Date.now(),
-                    application: d.application,
-                    edit: {
-                        vectorClock: vectorClock,
-                        comment: newComment
-                    }
+                    vectorClock: vectorClock,
+                    edit: comment_edit,
+                    re_sign: re_sign
                 }
-                d.comment = data.edit.comment;
-                let hashcontent = ["receiverID", "time", "application", "type", "message",
-                        "comment"
-                    ]
-                    .map(x => d[x]).join("|")
-                data.edit.sign = floCrypto.signData(hashcontent, myPrivKey)
-                singleRequest(data.receiverID, data)
-                    .then(result => resolve("Data comment updated"))
+                let request_hash = ["time", "vectorClock", "edit", "re_sign"].map(d => request[d]).join("|");
+                request.sign = user.sign(request_hash);
+                singleRequest(request.receiverID, request)
+                    .then(result => resolve(result))
                     .catch(error => reject(error))
-            })
+            }).catch(error => reject(error))
         })
     }
 
     //tag data in supernode cloud (subAdmin access only)
-    floCloudAPI.tagApplicationData = function(vectorClock, tag, options = {}) {
+    floCloudAPI.tagApplicationData = function (vectorClock, tag, options = {}) {
         return new Promise((resolve, reject) => {
-            if (!floGlobals.subAdmins.includes(myFloID))
+            if (!floGlobals.subAdmins.includes(user.id))
                 return reject("Only subAdmins can tag data")
             var request = {
                 receiverID: options.receiverID || DEFAULT.adminID,
-                requestorID: myFloID,
-                pubKey: myPubKey,
+                requestorID: user.id,
+                pubKey: user.public,
                 time: Date.now(),
                 vectorClock: vectorClock,
                 tag: tag,
             }
             let hashcontent = ["time", "vectorClock", 'tag'].map(d => request[d]).join("|");
-            request.sign = floCrypto.signData(hashcontent, myPrivKey);
+            request.sign = user.sign(hashcontent);
             singleRequest(request.receiverID, request)
                 .then(result => resolve(result))
                 .catch(error => reject(error))
@@ -572,18 +665,18 @@
     }
 
     //note data in supernode cloud (receiver only or subAdmin allowed if receiver is adminID)
-    floCloudAPI.noteApplicationData = function(vectorClock, note, options = {}) {
+    floCloudAPI.noteApplicationData = function (vectorClock, note, options = {}) {
         return new Promise((resolve, reject) => {
             var request = {
                 receiverID: options.receiverID || DEFAULT.adminID,
-                requestorID: myFloID,
-                pubKey: myPubKey,
+                requestorID: user.id,
+                pubKey: user.public,
                 time: Date.now(),
                 vectorClock: vectorClock,
                 note: note,
             }
             let hashcontent = ["time", "vectorClock", 'note'].map(d => request[d]).join("|");
-            request.sign = floCrypto.signData(hashcontent, myPrivKey);
+            request.sign = user.sign(hashcontent);
             singleRequest(request.receiverID, request)
                 .then(result => resolve(result))
                 .catch(error => reject(error))
@@ -591,7 +684,7 @@
     }
 
     //send general data
-    floCloudAPI.sendGeneralData = function(message, type, options = {}) {
+    floCloudAPI.sendGeneralData = function (message, type, options = {}) {
         return new Promise((resolve, reject) => {
             if (options.encrypt) {
                 let encryptionKey = options.encrypt === true ?
@@ -605,7 +698,7 @@
     }
 
     //request general data
-    floCloudAPI.requestGeneralData = function(type, options = {}) {
+    floCloudAPI.requestGeneralData = function (type, options = {}) {
         return new Promise((resolve, reject) => {
             var fk = filterKey(type, options)
             lastVC[fk] = parseInt(lastVC[fk]) || 0;
@@ -629,7 +722,7 @@
     }
 
     //request an object data from supernode cloud
-    floCloudAPI.requestObjectData = function(objectName, options = {}) {
+    floCloudAPI.requestObjectData = function (objectName, options = {}) {
         return new Promise((resolve, reject) => {
             options.lowerVectorClock = options.lowerVectorClock || lastVC[objectName] + 1;
             options.senderID = [false, null].includes(options.senderID) ? null :
@@ -666,7 +759,7 @@
         })
     }
 
-    floCloudAPI.closeRequest = function(requestID) {
+    floCloudAPI.closeRequest = function (requestID) {
         return new Promise((resolve, reject) => {
             let conn = _liveRequest[requestID]
             if (!conn)
@@ -680,7 +773,7 @@
     }
 
     //reset or initialize an object and send it to cloud
-    floCloudAPI.resetObjectData = function(objectName, options = {}) {
+    floCloudAPI.resetObjectData = function (objectName, options = {}) {
         return new Promise((resolve, reject) => {
             let message = {
                 reset: appObjects[objectName]
@@ -694,7 +787,7 @@
     }
 
     //update the diff and send it to cloud
-    floCloudAPI.updateObjectData = function(objectName, options = {}) {
+    floCloudAPI.updateObjectData = function (objectName, options = {}) {
         return new Promise((resolve, reject) => {
             let message = {
                 diff: diff.find(lastCommit.get(objectName), appObjects[
@@ -708,12 +801,73 @@
         })
     }
 
+    //upload file
+    floCloudAPI.uploadFile = function (fileBlob, type, options = {}) {
+        return new Promise((resolve, reject) => {
+            if (!(fileBlob instanceof File) && !(fileBlob instanceof Blob))
+                return reject("file must be instance of File/Blob");
+            fileBlob.arrayBuffer().then(arraybuf => {
+                let file_data = { type: fileBlob.type, name: fileBlob.name };
+                file_data.content = Crypto.util.bytesToBase64(new Uint8Array(arraybuf));
+                if (options.encrypt) {
+                    let encryptionKey = options.encrypt === true ?
+                        floGlobals.settings.encryptionKey : options.encrypt
+                    file_data = floCrypto.encryptData(JSON.stringify(file_data), encryptionKey)
+                }
+                sendApplicationData(file_data, type, options)
+                    .then(({ vectorClock, receiverID, type, application }) => resolve({ vectorClock, receiverID, type, application }))
+                    .catch(error => reject(error))
+            }).catch(error => reject(error))
+        })
+    }
+
+    //download file
+    floCloudAPI.downloadFile = function (vectorClock, options = {}) {
+        return new Promise((resolve, reject) => {
+            options.atVectorClock = vectorClock;
+            requestApplicationData(options.type, options).then(result => {
+                if (!result.length)
+                    return reject("File not found");
+                result = result[0];
+                try {
+                    let file_data = decodeMessage(result.message);
+                    //file is encrypted: decryption required
+                    if (file_data instanceof Object && "secret" in file_data) {
+                        if (!options.decrypt)
+                            return reject("Data is encrypted");
+                        let decryptionKey = (options.decrypt === true) ? Crypto.AES.decrypt(user_private, aes_key) : options.decrypt;
+                        if (!Array.isArray(decryptionKey))
+                            decryptionKey = [decryptionKey];
+                        let flag = false;
+                        for (let key of decryptionKey) {
+                            try {
+                                let tmp = floCrypto.decryptData(file_data, key);
+                                file_data = JSON.parse(tmp);
+                                flag = true;
+                                break;
+                            } catch (error) { }
+                        }
+                        if (!flag)
+                            return reject("Unable to decrypt file: Invalid private key");
+                    }
+                    //reconstruct the file
+                    let arraybuf = new Uint8Array(Crypto.util.base64ToBytes(file_data.content))
+                    result.file = new File([arraybuf], file_data.name, { type: file_data.type });
+                    resolve(result)
+                } catch (error) {
+                    console.error(error);
+                    reject("Data is not a file");
+                }
+            }).catch(error => reject(error))
+        })
+    }
+
     /*
     Functions:
     findDiff(original, updatedObj) returns an object with the added, deleted and updated differences  
     mergeDiff(original, allDiff) returns a new object from original object merged with all differences (allDiff is returned object of findDiff)
     */
-    var diff = (function() {
+    var diff = (function () {
         const isDate = d => d instanceof Date;
         const isEmpty = o => Object.keys(o).length === 0;
         const isObject = o => o != null && typeof o === 'object';
@@ -887,23 +1041,23 @@
             }, {});
         };
 
-        const mergeRecursive = (obj1, obj2) => {
+        const mergeRecursive = (obj1, obj2, deleteMode = false) => {
             for (var p in obj2) {
                 try {
                     if (obj2[p].constructor == Object)
-                        obj1[p] = mergeRecursive(obj1[p], obj2[p]);
+                        obj1[p] = mergeRecursive(obj1[p], obj2[p], deleteMode);
                     // Property in destination object set; update its value.
-                    else if (Ext.isArray(obj2[p])) {
+                    else if (Array.isArray(obj2[p])) {
                         // obj1[p] = [];
                         if (obj2[p].length < 1)
                             obj1[p] = obj2[p];
                         else
-                            obj1[p] = mergeRecursive(obj1[p], obj2[p]);
+                            obj1[p] = mergeRecursive(obj1[p], obj2[p], deleteMode);
                     } else
-                        obj1[p] = obj2[p];
+                        obj1[p] = deleteMode && obj2[p] === null ? undefined : obj2[p];
                 } catch (e) {
                     // Property in destination object not set; create it and set its value.
-                    obj1[p] = obj2[p];
+                    obj1[p] = deleteMode && obj2[p] === null ? undefined : obj2[p];
                 }
             }
             return obj1;
@@ -912,20 +1066,13 @@
         const cleanse = (obj) => {
             Object.keys(obj).forEach(key => {
                 var value = obj[key];
-                if (typeof value === "object" && value !== null) {
-                    // Recurse...
-                    cleanse(value);
-                    // ...and remove if now "empty" (NOTE: insert your definition of "empty" here)
-                    //if (!Object.keys(value).length) 
-                    //  delete obj[key];
-                } else if (value === null)
-                    delete obj[key]; // null, remove it
+                if (typeof value === "object" && value !== null)
+                    obj[key] = cleanse(value);
+                else if (typeof value === 'undefined')
+                    delete obj[key]; // undefined, remove it
             });
-            if (obj.constructor.toString().indexOf("Array") != -1) {
-                obj = obj.filter(function(el) {
-                    return el != null;
-                });
-            }
+            if (Array.isArray(obj))
+                obj = obj.filter(v => typeof v !== 'undefined');
             return obj;
         }
 
@@ -941,7 +1088,7 @@
             if (Object.keys(diff.updated).length !== 0)
                 obj = mergeRecursive(obj, diff.updated)
             if (Object.keys(diff.deleted).length !== 0) {
-                obj = mergeRecursive(obj, diff.deleted)
+                obj = mergeRecursive(obj, diff.deleted, true)
                 obj = cleanse(obj)
             }
             if (Object.keys(diff.added).length !== 0)
